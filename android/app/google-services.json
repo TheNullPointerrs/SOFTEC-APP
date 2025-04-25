@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "766993715782",
+    "project_id": "softtechapp-1ac9a",
+    "storage_bucket": "softtechapp-1ac9a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:766993715782:android:e966b1b999417a4af0b047",
+        "android_client_info": {
+          "package_name": "com.example.softechapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAuSVG5oT46Jj1OYS7e35dNEgPTMbS1Neo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:766993715782:android:c6a7e6d4572f028df0b047",
+        "android_client_info": {
+          "package_name": "com.softechapp.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAuSVG5oT46Jj1OYS7e35dNEgPTMbS1Neo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

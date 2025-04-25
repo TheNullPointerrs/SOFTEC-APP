@@ -1,0 +1,49 @@
+name: softechapp
+description: "A new Flutter project."
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.0
+
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  flutter_riverpod:
+  firebase_auth:
+  firebase_core:
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^5.0.0
+
+# The following section is specific to Flutter packages.
+flutter:
+  uses-material-design: true
+
+  # To add assets to your application, add an assets section, like this:
+  assets:
+    - lib/assets/
+
+
+  fonts:
+    - family: Jost
+      fonts:
+        - asset: lib/fonts/Jost/static/Jost-Bold.ttf
+          weight: 700
+        - asset: lib/fonts/Jost/static/Jost-Regular.ttf
+          weight: 400
+        - asset: lib/fonts/Jost/static/Jost-Light.ttf
+          weight: 300
+        - asset: lib/fonts/Jost/static/Jost-ExtraLight.ttf
+          weight: 200
+        - asset: lib/fonts/Jost/static/Jost-Medium.ttf
+          weight: 500
+        - asset: lib/fonts/Jost/static/Jost-SemiBold.ttf
+          weight: 600
