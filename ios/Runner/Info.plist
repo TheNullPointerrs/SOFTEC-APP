@@ -45,5 +45,21 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+
+	<!-- Google Sign-In Client ID -->
+	<key>GIDClientID</key>
+	<string>766993715782-qq2qr7btru9bcsipvrsfank5kt6rq4e7.apps.googleusercontent.com</string>
+
+	<!-- URL Schemes -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.766993715782-qq2qr7btru9bcsipvrsfank5kt6rq4e7</string>
+			</array>
+		</dict>
+	</array>
+
 </dict>
 </plist>

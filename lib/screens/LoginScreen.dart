@@ -154,6 +154,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     
     return Scaffold(
       backgroundColor: backgroundColor,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: primaryTextColor),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -304,8 +312,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               const SizedBox(height: 8),
               isLoading
                 ? SizedBox(
-                    width: 80,
-                    height: 40,
+                    width: 60, // Reduced from 80
+                    height: 30, // Reduced from 40
                     child: LoadingIndicator(
                       indicatorType: Indicator.ballPulse,
                       colors: [AppTheme.firstGradientColor],

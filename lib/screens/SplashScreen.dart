@@ -1,41 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../const/theme.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends StatelessWidget {
   SplashScreen({super.key});
 
-  @override
-  State<SplashScreen> createState() => _SplashScreenState();
-}
-
-class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<int> _typewriterAnimation;
-  final String _appName = "Mood Sync";
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(seconds: 3),
-      vsync: this,
-    );
-    _typewriterAnimation = StepTween(begin: 0, end: _appName.length)
-        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn))
-      ..addListener(() {
-        setState(() {});
-      });
-    _controller.forward();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,21 +34,7 @@ class _SplashScreenState extends State<SplashScreen>
               ),
             ),
             const SizedBox(height: 20),
-            ShaderMask(
-              shaderCallback: (bounds) => LinearGradient(
-                colors: [AppTheme.firstGradientColor, AppTheme.secondGradientColor],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ).createShader(bounds),
-              child: Text(
-                _appName.substring(0, _typewriterAnimation.value),
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white, // Text color is overridden by ShaderMask
-                ),
-              ),
-            ),
+            
           ],
         ),
       ),

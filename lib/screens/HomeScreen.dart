@@ -7,6 +7,7 @@ import '../providers/quote_provider.dart';
 import '../providers/task_provider.dart';
 import '../providers/mood_provider.dart';
 import '../providers/calendar_provider.dart';
+import '../widgets/mood_input_modal.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -22,7 +23,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Fetch quote when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(quoteProvider.notifier).fetchQuote();
+      
+      // Ensure mood data is loaded from Firebase
+      final moodData = ref.read(moodStreamProvider);
+      if (moodData.hasValue && moodData.value!.isNotEmpty) {
+        ref.read(moodProvider.notifier).state = moodData.value!;
+      }
+      
+      // Show mood input modal if no mood entry for today
+      _checkAndShowMoodPrompt();
     });
+  }
+  
+  void _checkAndShowMoodPrompt() {
+    final moodEntries = ref.read(combinedMoodProvider);
+    final today = DateTime.now();
+    
+    // Check if there's an entry for today
+    final hasTodayEntry = moodEntries.any((entry) => 
+      entry.timestamp.year == today.year && 
+      entry.timestamp.month == today.month && 
+      entry.timestamp.day == today.day
+    );
+    
+    // Show mood input if no entry for today
+    if (!hasTodayEntry) {
+      // Delay to ensure the UI is fully loaded
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          MoodInputModal.show(context, onMoodAdded: () {
+            setState(() {});
+          });
+        }
+      });
+    }
   }
   
   @override
@@ -35,7 +69,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Access providers
     final quote = ref.watch(quoteProvider);
     final tasks = ref.watch(taskProvider);
-    final moodEntries = ref.watch(moodProvider);
+    final moodEntries = ref.watch(combinedMoodProvider);
     final selectedDate = ref.watch(selectedDateProvider);
 
     // Get ongoing tasks
@@ -384,75 +418,77 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         content: SizedBox(
                           height: 300,
                           width: 300,
-                          child: LineChart(
-                            LineChartData(
-                              gridData: FlGridData(
-                                show: true,
-                                drawVerticalLine: false,
-                              ),
-                              titlesData: FlTitlesData(
-                                show: true,
-                                bottomTitles: AxisTitles(
-                                  sideTitles: SideTitles(showTitles: false),
-                                ),
-                                leftTitles: AxisTitles(
-                                  sideTitles: SideTitles(
-                                    showTitles: true,
-                                    getTitlesWidget: (value, meta) {
-                                      String text = '';
-                                      switch (value.toInt()) {
-                                        case 1:
-                                          text = '😢';
-                                          break;
-                                        case 2:
-                                          text = '😐';
-                                          break;
-                                        case 3:
-                                          text = '🙂';
-                                          break;
-                                        case 4:
-                                          text = '😊';
-                                          break;
-                                        case 5:
-                                          text = '😁';
-                                          break;
-                                      }
-                                      return Text(text);
-                                    },
-                                    reservedSize: 40,
+                          child: moodEntries.isEmpty 
+                              ? const Center(child: Text('No mood data available'))
+                              : LineChart(
+                                  LineChartData(
+                                    gridData: FlGridData(
+                                      show: true,
+                                      drawVerticalLine: false,
+                                    ),
+                                    titlesData: FlTitlesData(
+                                      show: true,
+                                      bottomTitles: AxisTitles(
+                                        sideTitles: SideTitles(showTitles: false),
+                                      ),
+                                      leftTitles: AxisTitles(
+                                        sideTitles: SideTitles(
+                                          showTitles: true,
+                                          getTitlesWidget: (value, meta) {
+                                            String text = '';
+                                            switch (value.toInt()) {
+                                              case 1:
+                                                text = '😢';
+                                                break;
+                                              case 2:
+                                                text = '😐';
+                                                break;
+                                              case 3:
+                                                text = '🙂';
+                                                break;
+                                              case 4:
+                                                text = '😊';
+                                                break;
+                                              case 5:
+                                                text = '😁';
+                                                break;
+                                            }
+                                            return Text(text);
+                                          },
+                                          reservedSize: 40,
+                                        ),
+                                      ),
+                                      rightTitles: AxisTitles(
+                                        sideTitles: SideTitles(showTitles: false),
+                                      ),
+                                      topTitles: AxisTitles(
+                                        sideTitles: SideTitles(showTitles: false),
+                                      ),
+                                    ),
+                                    borderData: FlBorderData(show: true),
+                                    lineBarsData: [
+                                      LineChartBarData(
+                                        spots: ref.watch(moodProvider.notifier).getLast10Entries()
+                                            .map((entry) => FlSpot(
+                                                  moodEntries.indexOf(entry).toDouble(),
+                                                  entry.rating.toDouble(),
+                                                ))
+                                            .toList(),
+                                        isCurved: true,
+                                        color: Colors.blue,
+                                        barWidth: 3,
+                                        isStrokeCapRound: true,
+                                        dotData: FlDotData(show: true),
+                                        belowBarData: BarAreaData(
+                                          show: true,
+                                          color: Colors.blue.withOpacity(0.1),
+                                        ),
+                                      ),
+                                    ],
+                                    minY: 1,
+                                    maxY: 5,
                                   ),
                                 ),
-                                rightTitles: AxisTitles(
-                                  sideTitles: SideTitles(showTitles: false),
-                                ),
-                                topTitles: AxisTitles(
-                                  sideTitles: SideTitles(showTitles: false),
-                                ),
-                              ),
-                              borderData: FlBorderData(show: true),
-                              lineBarsData: [
-                                LineChartBarData(
-                                  spots: ref.read(moodProvider.notifier).getLast10Entries()
-                                      .map((entry) => FlSpot(
-                                            moodEntries.indexOf(entry).toDouble(),
-                                            entry.rating.toDouble(),
-                                          ))
-                                      .toList(),
-                                  isCurved: true,
-                                  color: Colors.blue,
-                                  barWidth: 3,
-                                  isStrokeCapRound: true,
-                                  dotData: FlDotData(show: true),
-                                  belowBarData: BarAreaData(
-                                    show: true,
-                                    color: Colors.blue.withOpacity(0.1),
-                                  ),
-                                ),
-                              ],
-                              minY: 1,
-                              maxY: 5,
-                            ),
-                          ),
                         ),
                         actions: [
                           TextButton(
@@ -481,7 +517,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           borderData: FlBorderData(show: false),
                           lineBarsData: [
                             LineChartBarData(
-                              spots: ref.read(moodProvider.notifier).getLast10Entries()
+                              spots: ref.watch(moodProvider.notifier).getLast10Entries()
                                   .map((entry) => FlSpot(
                                         moodEntries.indexOf(entry).toDouble(),
                                         entry.rating.toDouble(),
@@ -507,83 +543,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
                 
-                // Add button for mood
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: GestureDetector(
-                    onTap: () {
-                      // Show mood entry dialog
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('How are you feeling today?'),
-                          content: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                children: [1, 2, 3, 4, 5].map((rating) {
-                                  String emoji;
-                                  switch (rating) {
-                                    case 1:
-                                      emoji = '😢';
-                                      break;
-                                    case 2:
-                                      emoji = '😐';
-                                      break;
-                                    case 3:
-                                      emoji = '🙂';
-                                      break;
-                                    case 4:
-                                      emoji = '😊';
-                                      break;
-                                    case 5:
-                                      emoji = '😁';
-                                      break;
-                                    default:
-                                      emoji = '🙂';
-                                  }
-                                  return GestureDetector(
-                                    onTap: () {
-                                      // Add new mood entry
-                                      ref.read(moodProvider.notifier).addMoodEntry(
-                                            MoodEntry(
-                                              id: DateTime.now().millisecondsSinceEpoch.toString(),
-                                              description: 'Feeling ${rating == 5 ? 'great' : rating == 4 ? 'good' : rating == 3 ? 'okay' : rating == 2 ? 'not so good' : 'bad'} today',
-                                              timestamp: DateTime.now(),
-                                              rating: rating,
-                                              emoji: emoji,
-                                            ),
-                                          );
-                                      Navigator.of(context).pop();
-                                    },
-                                    child: Text(
-                                      emoji,
-                                      style: const TextStyle(fontSize: 30),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.only(top: 10, right: 10),
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: AppTheme.primary,
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                      child: const Icon(
-                        Icons.add,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
+                // // Add button for mood
+                // Align(
+                //   alignment: Alignment.centerRight,
+                //   child: GestureDetector(
+                //     onTap: () {
+                //       // Show mood input dialog
+                //       MoodInputModal.show(context);
+                //     },
+                //     child: Container(
+                //       margin: const EdgeInsets.only(top: 10, right: 10),
+                //       width: 40,
+                //       height: 40,
+                //       decoration: BoxDecoration(
+                //         color: AppTheme.primary,
+                //         borderRadius: BorderRadius.circular(50),
+                //       ),
+                //       child: const Icon(
+                //         Icons.add,
+                //         color: Colors.white,
+                //       ),
+                //     ),
+                //   ),
+                // ),
                 
                 const SizedBox(height: 20),
                 

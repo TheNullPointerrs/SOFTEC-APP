@@ -31,7 +31,7 @@ class _MainNavigationState extends State<MainNavigation> {
       onItemSelected: (index) {
         // Update selected index
       },
-      padding: const EdgeInsets.fromLTRB(0, 7, 0, 0),
+      padding: const EdgeInsets.fromLTRB(0, 10, 0, 0),
       animationSettings: const NavBarAnimationSettings(
         navBarItemAnimation: ItemAnimationSettings(
           duration: Duration(milliseconds: 400),
@@ -52,22 +52,22 @@ class _MainNavigationState extends State<MainNavigation> {
           topLeft: Radius.circular(20),
           topRight: Radius.circular(20),
         ),
-        colorBehindNavBar: Theme.of(context).brightness == Brightness.dark 
-            ? const Color(0xFF262626) 
-            : Colors.white,
-        border: Border.all(
-          color: Theme.of(context).brightness == Brightness.dark 
-              ? Colors.grey.shade800 
-              : Colors.white,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.4),
-            spreadRadius: 5,
-            blurRadius: 7,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        // colorBehindNavBar: Theme.of(context).brightness == Brightness.dark 
+        //     ? const Color(0xFF262626) 
+        //     : Colors.white,
+        // border: Border.all(
+        //   color: Theme.of(context).brightness == Brightness.dark 
+        //       ? Colors.grey.shade800 
+        //       : Colors.white,
+        // ),
+        // boxShadow: [
+        //   BoxShadow(
+        //     color: Colors.grey.withOpacity(0.4),
+        //     spreadRadius: 5,
+        //     blurRadius: 7,
+        //     offset: const Offset(0, 3),
+        //   ),
+        // ],
       ),
     );
   }
