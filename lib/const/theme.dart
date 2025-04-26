@@ -30,7 +30,7 @@ class AppTheme {
   static final ThemeData darkTheme = ThemeData(
     fontFamily: 'Jost',
     brightness: Brightness.dark,
-    scaffoldBackgroundColor: const Color(0xFF0C0C0C), // Dark Background
+    scaffoldBackgroundColor: const Color(0xFF0B001F), // Dark Background
     colorScheme: const ColorScheme.dark(
       surface: Color(0xFF0C0C0C), // Background Color
       primary: Color(0xFF7A0EFF), // Button & Primary Color
