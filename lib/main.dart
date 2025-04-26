@@ -3,9 +3,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:softechapp/firebase_options.dart';
+import 'package:softechapp/screens/ForgotPass.dart';
+import 'package:softechapp/screens/LoginScreen.dart';
+import 'package:softechapp/screens/MainNavigation.dart';
 import 'package:softechapp/screens/Onboarding.dart';
+import 'package:softechapp/screens/SignUpScreen.dart';
 import 'package:softechapp/screens/SplashScreen.dart';
-import 'const/app_colors.dart';
+import 'const/theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,18 +30,32 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
-          useMaterial3: true,
-          fontFamily: 'Jost',
-          scaffoldBackgroundColor: AppColors.appWhite),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
       initialRoute: '/',
       onGenerateRoute: (settings) {
         WidgetBuilder builder;
         switch (settings.name) {
           case '/':
-            builder = (BuildContext _) =>  OnboardingScreen();
+            builder = (BuildContext _) => SplashScreen();
             break;
+          case '/onboarding':
+            builder = (BuildContext _) => OnboardingScreen();
+            break;
+          case '/login':
+            builder = (BuildContext _) => LoginScreen();
+            break;  
+          case '/signup':
+            builder = (BuildContext _) => SignUpScreen();
+            break;
+          case '/home':
+            builder = (BuildContext _) => MainNavigation();
+            break;
+          case '/forgotPass':
+            builder = (BuildContext _) => ForgotPass();
+            break;  
+
           default:
             throw Exception('Invalid route: ${settings.name}');
         }
@@ -73,7 +91,7 @@ class AuthWrapper extends ConsumerWidget {
     if (user != null) {
       return SplashScreen();
     } else {
-      return const SplashScreen();
+      return SplashScreen();
     }
   }
 }

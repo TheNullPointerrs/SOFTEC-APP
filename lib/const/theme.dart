@@ -58,6 +58,9 @@ class AppTheme {
   static const Color primaryTextColorDark = Color(0xFFFFFFFF);
   static const Color secondaryTextColorDark = Color(0xFF696363);
 
+  static const Color firstGradientColor = Color(0xFF7A0EFF);
+  static const Color secondGradientColor = Color(0xFF5800C3);
+
   static ThemeData _theme = lightTheme;
   static Color get background => _theme.scaffoldBackgroundColor;
   static Color get primary => _theme.colorScheme.primary;

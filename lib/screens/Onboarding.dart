@@ -41,10 +41,25 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
 
   @override
   Widget build(BuildContext context) {
-    final fontSize = ref.watch(fontSizeProvider);
+    ref.watch(fontSizeProvider);
     final fontSizeNotifier = ref.watch(fontSizeProvider.notifier);
+    final selectedFont = ref.watch(selectedFontProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    
+    // Get the appropriate font size based on user selection
+    double getFontSize() {
+      switch (selectedFont) {
+        case FontSize.small:
+          return fontSizeNotifier.small;
+        case FontSize.large:
+          return fontSizeNotifier.large;
+        case FontSize.medium:
+        return fontSizeNotifier.medium;
+      }
+    }
+    
+    final currentFontSize = getFontSize();
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -83,7 +98,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                     text: TextSpan(
                       style: TextStyle(
                         fontFamily: 'Sora',
-                        fontSize: fontSizeNotifier.large * 2,
+                        fontSize: selectedFont == FontSize.large 
+                            ? fontSizeNotifier.large * 2 
+                            : selectedFont == FontSize.small 
+                                ? fontSizeNotifier.small * 2 
+                                : fontSizeNotifier.medium * 2,
                         fontWeight: FontWeight.w800,
                         color: colorScheme.onSurface,
                       ),
@@ -92,7 +111,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                         TextSpan(
                           text: 'Sync',
                           style: TextStyle(
-                            color: colorScheme.primary.withValues(alpha:0.7),
+                            color: colorScheme.primary.withOpacity(0.7),
                           ),
                         ),
                       ],
@@ -109,8 +128,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: 'Sora',
-                        fontSize: fontSizeNotifier.medium * 0.8,
-                        color: colorScheme.onSurface.withValues(alpha:0.7),
+                        fontSize: currentFontSize * 0.8,
+                        color: colorScheme.onSurface.withOpacity(0.7),
                       ),
                     ),
                   ),
@@ -129,13 +148,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                         ),
                       ),
                       onPressed: () {
-                        // Navigate to Login
+                              Navigator.pushNamed(context, '/login');
+
                       },
                       child: Text(
                         'Login',
                         style: TextStyle(
                           fontFamily: 'Sora',
-                          fontSize: fontSizeNotifier.medium,
+                          fontSize: currentFontSize,
                           color: colorScheme.onSurface,
 
                         ),
@@ -161,7 +181,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                           ),
                         ),
                         onPressed: () {
-                          // Navigate to Sign Up
+                          Navigator.pushNamed(context, '/signup');
                         },
                         child: Ink(
                           decoration: BoxDecoration(
@@ -180,7 +200,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                               'Sign Up',
                               style: TextStyle(
                                 fontFamily: 'Sora',
-                                fontSize: fontSizeNotifier.medium,
+                                fontSize: currentFontSize,
                                 color: colorScheme.onSurface,
                               ),
                             ),
@@ -189,6 +209,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                       ),
                     ),
                   ),
+                  
                 ],
               ),
             ),
@@ -197,5 +218,4 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       ),
     );
   }
-}
-
+  }
