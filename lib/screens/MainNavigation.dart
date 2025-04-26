@@ -5,6 +5,7 @@ import 'package:softechapp/screens/TaskScreen.dart';
 import 'package:softechapp/screens/CalendarScreen.dart';
 import 'package:softechapp/screens/JournalScreen.dart';
 import 'package:softechapp/screens/ProfileScreen.dart';
+import 'package:softechapp/screens/notesList.dart';
 import '../const/theme.dart';
 
 class MainNavigation extends StatefulWidget {
@@ -77,7 +78,7 @@ class _MainNavigationState extends State<MainNavigation> {
       const HomeScreen(),
       const TaskScreen(),
       const CalendarScreen(),
-      const JournalScreen(),
+      NotesListScreen(),
       const ProfileScreen(),
     ];
   }

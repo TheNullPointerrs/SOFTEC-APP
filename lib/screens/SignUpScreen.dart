@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:softechapp/providers/fontProvider.dart';
 import 'package:softechapp/providers/auth.dart';
-import 'package:softechapp/widgets/developer_footer.dart';
+import 'package:softechapp/widegts/developer_footer.dart';
 import 'package:loading_indicator/loading_indicator.dart';
 import '../const/theme.dart';
 
