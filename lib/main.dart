@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:softechapp/firebase_options.dart';
+import 'package:softechapp/screens/Onboarding.dart';
 import 'package:softechapp/screens/SplashScreen.dart';
 import 'const/app_colors.dart';
 
@@ -35,7 +36,7 @@ class MyApp extends ConsumerWidget {
         WidgetBuilder builder;
         switch (settings.name) {
           case '/':
-            builder = (BuildContext _) =>  SplashScreen();
+            builder = (BuildContext _) =>  OnboardingScreen();
             break;
           default:
             throw Exception('Invalid route: ${settings.name}');
