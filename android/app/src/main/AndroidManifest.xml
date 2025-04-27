@@ -6,7 +6,7 @@
     
     
     <application
-        android:label="softechapp"
+        android:label="Mood Sync"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

@@ -4,6 +4,7 @@ import '../const/theme.dart';
 import 'package:intl/intl.dart';
 import 'package:softechapp/providers/task_provider.dart';
 import 'package:softechapp/models/task.dart';
+import 'package:softechapp/widgets/FontSizeConsumer.dart';
 
 // Notification Models
 class TaskReminderNotification {
@@ -67,11 +68,6 @@ class UpdateNotification {
 
 // Make a provider for update notifications (non-task related)
 final updateNotificationProvider = StateProvider<List<UpdateNotification>>((ref) => [
-  UpdateNotification(
-    id: '1',
-    message: 'You completed 5 tasks this week!',
-    timestamp: DateTime.now().subtract(const Duration(hours: 3)),
-  ),
   UpdateNotification(
     id: '2',
     message: 'New feature: Voice notes are now available',
@@ -154,7 +150,7 @@ class NotificationScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Reminders
-                  Text(
+                  FontSizeText(
                     'Upcoming Tasks',
                     style: TextStyle(
                       color: Theme.of(context).textTheme.bodyLarge?.color,
@@ -175,7 +171,7 @@ class NotificationScreen extends ConsumerWidget {
                   const SizedBox(height: 30),
                   
                   // Missed Tasks
-                  Text(
+                  FontSizeText(
                     'Missed Tasks',
                     style: TextStyle(
                       color: Theme.of(context).textTheme.bodyLarge?.color,
@@ -196,7 +192,7 @@ class NotificationScreen extends ConsumerWidget {
                   const SizedBox(height: 30),
                   
                   // Updates section
-                  Text(
+                  FontSizeText(
                     'Updates',
                     style: TextStyle(
                       color: Theme.of(context).textTheme.bodyLarge?.color,
@@ -261,7 +257,7 @@ class NotificationScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  FontSizeText(
                     notification.taskName,
                     style: const TextStyle(
                       color: Colors.white,
@@ -281,7 +277,7 @@ class NotificationScreen extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(width: 6),
-                      Text(
+                      FontSizeText(
                         'Deadline: ${formatter.format(notification.deadline)}',
                         style: const TextStyle(
                           color: Colors.white70,
