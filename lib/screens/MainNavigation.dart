@@ -77,7 +77,7 @@ class _MainNavigationState extends State<MainNavigation> {
         inactiveColorPrimary: isDarkMode ? Colors.grey : Colors.grey.shade400,
       ),
       PersistentBottomNavBarItem(
-        icon: PhosphorIcon(PhosphorIcons.calendar(  PhosphorIconsStyle.fill)),
+        icon: PhosphorIcon(PhosphorIcons.calendar(PhosphorIconsStyle.fill)),
         activeColorPrimary: AppTheme.primary,
         inactiveColorPrimary: isDarkMode ? Colors.grey : Colors.grey.shade400,
       ),
@@ -87,14 +87,26 @@ class _MainNavigationState extends State<MainNavigation> {
         inactiveColorPrimary: isDarkMode ? Colors.grey : Colors.grey.shade400,
       ),
       PersistentBottomNavBarItem(
-        icon: const CircleAvatar(
-          radius: 40,
-          backgroundImage: AssetImage(
-            "assets/images/avatarLogo.png", // Placeholder profile image
+        icon: Container(
+          width: 26,
+          height: 26,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: _controller.index == 4 ? AppTheme.primary : Colors.transparent,
+              width: 2,
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(30),
+            child: Image.asset(
+              "assets/images/avatarLogo.png",
+              fit: BoxFit.cover,
+            ),
           ),
         ),
-        activeColorPrimary: AppTheme.primary,
-        inactiveColorPrimary: isDarkMode ? Colors.grey : Colors.grey.shade400,
+        activeColorPrimary: Colors.transparent,
+        inactiveColorPrimary: Colors.transparent,
       ),
     ];
   }

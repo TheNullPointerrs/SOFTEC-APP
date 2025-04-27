@@ -5,6 +5,9 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:softechapp/const/theme.dart';
 import 'package:softechapp/providers/profile_provider.dart';
 import 'package:softechapp/providers/task_provider.dart';
+import 'package:softechapp/services/auth.dart';
+import 'package:intl/intl.dart';
+import 'package:softechapp/providers/fontProvider.dart';
 
 
 // Custom widget for contribution grid
@@ -28,46 +31,45 @@ class ActivityGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     
-    return SizedBox(
-      width: columns * (cellSize + spacing),
-      height: rows * (cellSize + spacing),
-      child: Column(
-        children: List.generate(rows, (row) {
-          return Padding(
-            padding: EdgeInsets.only(bottom: row < rows - 1 ? spacing : 0),
-            child: Row(
-              children: List.generate(columns, (col) {
-                final index = row * columns + col;
-                if (index < data.length) {
-                  return Padding(
-                    padding: EdgeInsets.only(right: col < columns - 1 ? spacing : 0),
-                    child: Container(
-                      width: cellSize,
-                      height: cellSize,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Calculate cell size to fill the available width
+        final availableWidth = constraints.maxWidth;
+        final calculatedCellSize = (availableWidth - (spacing * (columns - 1))) / columns;
+        
+        return Column(
+          children: List.generate(rows, (row) {
+            return Padding(
+              padding: EdgeInsets.only(bottom: row < rows - 1 ? spacing : 0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: List.generate(columns, (col) {
+                  final index = row * columns + col;
+                  if (index < data.length) {
+                    return Container(
+                      width: calculatedCellSize,
+                      height: calculatedCellSize,
                       decoration: BoxDecoration(
                         color: data[index].color,
                         borderRadius: BorderRadius.circular(2),
                       ),
-                    ),
-                  );
-                } else {
-                  return Padding(
-                    padding: EdgeInsets.only(right: col < columns - 1 ? spacing : 0),
-                    child: Container(
-                      width: cellSize,
-                      height: cellSize,
+                    );
+                  } else {
+                    return Container(
+                      width: calculatedCellSize,
+                      height: calculatedCellSize,
                       decoration: BoxDecoration(
                         color: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade300,
                         borderRadius: BorderRadius.circular(2),
                       ),
-                    ),
-                  );
-                }
-              }),
-            ),
-          );
-        }),
-      ),
+                    );
+                  }
+                }),
+              ),
+            );
+          }),
+        );
+      },
     );
   }
 }
@@ -88,6 +90,9 @@ class ProfileScreen extends ConsumerWidget {
         body: Center(child: Text("No user found, please log in")),
       );
     }
+
+    // Get current month name
+    final currentMonth = DateFormat('MMMM').format(DateTime.now());
 
     // Fetch user profile using the `userProfileProvider` with the `userId`
     final userProfileAsyncValue = ref.watch(userProfileProvider(userId));
@@ -127,7 +132,9 @@ class ProfileScreen extends ConsumerWidget {
             actions: [
               IconButton(
                 icon: const Icon(Icons.menu, color: Colors.white),
-                onPressed: () {},
+                onPressed: () {
+                  _showLogoutBottomSheet(context);
+                },
               ),
             ],
             elevation: 0,
@@ -354,6 +361,16 @@ class ProfileScreen extends ConsumerWidget {
                               cellSize: 16,
                               spacing: 2,
                             ),
+                            const SizedBox(height: 10),
+                            Center(
+                              child: Text(
+                                "Task Streak Of $currentMonth",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade400,
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -367,6 +384,158 @@ class ProfileScreen extends ConsumerWidget {
       },
       loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (e, st) => Scaffold(body: Center(child: Text('Error: $e'))),
+    );
+  }
+
+  void _showLogoutBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Consumer(
+          builder: (context, ref, _) {
+            final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+            final selectedFontSize = ref.watch(selectedFontProvider);
+            
+            return Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: isDarkMode ? Colors.black : Colors.white,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  const Text(
+                    'Customization',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                  
+                  // Dark theme toggle
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Enable dark theme',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
+                        ),
+                      ),
+                      Switch(
+                        value: isDarkMode,
+                        onChanged: (_) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Theme is controlled by your system settings'),
+                            ),
+                          );
+                        },
+                        activeColor: AppTheme.primary,
+                        activeTrackColor: AppTheme.primary.withOpacity(0.5),
+                      ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 40),
+                  
+                  // Font size selector
+                  Text(
+                    'Adjust font size',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                  
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1E1E1E)
+                : Colors.white,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade400,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(height: 20),
+              ListTile(
+                leading: const Icon(Icons.settings),
+                title: const Text('Settings', style: TextStyle(fontSize: 16)),
+                onTap: () {
+                  Navigator.pop(context); // Close the bottom sheet
+                  Navigator.pushNamed(context, '/settings');
+                },
+              ),
+              const SizedBox(height: 10),
+              ListTile(
+                leading: const Icon(Icons.logout, color: Colors.red),
+                title: const Text('Logout', style: TextStyle(fontSize: 16)),
+                onTap: () async {
+                  // Close the bottom sheet
+                  Navigator.pop(context);
+                  
+                  // Show loading dialog
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) => const Center(child: CircularProgressIndicator()),
+                  );
+                  
+                  try {
+                    // Perform logout
+                    final authService = AuthService();
+                    await authService.signOut();
+                    
+                    // Close loading dialog and navigate to login
+                    Navigator.pop(context); // Close loading dialog
+                    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+                  } catch (e) {
+                    // Close loading dialog and show error
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error logging out: $e')),
+                    );
+                  }
+                },
+              ),
+              const SizedBox(height: 10),
+              ListTile(
+                leading: const Icon(Icons.close),
+                title: const Text('Cancel', style: TextStyle(fontSize: 16)),
+                onTap: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

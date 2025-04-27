@@ -10,6 +10,7 @@ import 'package:softechapp/screens/NotificationsScreen.dart';
 import 'package:softechapp/screens/Onboarding.dart';
 import 'package:softechapp/screens/SignUpScreen.dart';
 import 'package:softechapp/screens/SplashScreen.dart';
+import 'package:softechapp/screens/SettingsScreen.dart';
 import 'package:softechapp/services/local_notifications.dart';
 import 'const/theme.dart';
 
@@ -66,7 +67,10 @@ class MyApp extends ConsumerWidget {
             break; 
           case '/notificationsScreen':
             builder = (BuildContext _) => NotificationScreen();
-            break;       
+            break;
+          case '/settings':
+            builder = (BuildContext _) => SettingsScreen();
+            break;
 
           default:
             throw Exception('Invalid route: ${settings.name}');
