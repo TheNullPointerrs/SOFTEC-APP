@@ -102,11 +102,30 @@ class ProfileScreen extends ConsumerWidget {
     final int totalTasks = tasksList.length;
     final int completedTasks = tasksList.where((task) => task.isCompleted).length;
 
-    final workloadData = {
-      "Work": 20,
-      "Study": 15,
-      "Fitness": 65,
-    };
+    // final workloadData = {
+    //   "Work": 20,
+    //   "Study": 15,
+    //   "Fitness": 65,
+    // };
+    
+  // Generate workload data dynamically
+  final Map<String, int> workloadData = {};
+
+  // Loop through tasks and categorize them
+  for (var task in tasksList) {
+    if (task.category != null) {
+      workloadData.update(task.category, (value) => value + 1, ifAbsent: () => 1);
+    }
+  }
+
+  // Optionally, you can set default values or handle empty categories
+  if (workloadData.isEmpty) {
+    workloadData.addAll({
+      "Work": 0,
+      "Study": 0,
+      "General": 0,
+    });
+  }
 
     return userProfileAsyncValue.when(
       data: (user) {
@@ -256,7 +275,7 @@ class ProfileScreen extends ConsumerWidget {
                                     showTitle: false,
                                   ),
                                   PieChartSectionData(
-                                    value: (workloadData["Fitness"] ?? 0).toDouble(),
+                                    value: (workloadData["General"] ?? 0).toDouble(),
                                     color: Colors.amber,
                                     radius: 50,
                                     showTitle: false,
@@ -289,7 +308,7 @@ class ProfileScreen extends ConsumerWidget {
                                 const SizedBox(height: 10),
                                 _buildLegendItem(Colors.green, "Study"),
                                 const SizedBox(height: 10),
-                                _buildLegendItem(Colors.amber, "Fitness"),
+                                _buildLegendItem(Colors.amber, "General"),
                               ],
                             ),
                           ),
@@ -393,148 +412,7 @@ class ProfileScreen extends ConsumerWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        return Consumer(
-          builder: (context, ref, _) {
-            final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-            final selectedFontSize = ref.watch(selectedFontProvider);
-            
-            return Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: isDarkMode ? Colors.black : Colors.white,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
-                ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header
-                  const Text(
-                    'Customization',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                  
-                  // Dark theme toggle
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Enable dark theme',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w500,
-                          color: Theme.of(context).textTheme.bodyLarge?.color,
-                        ),
-                      ),
-                      Switch(
-                        value: isDarkMode,
-                        onChanged: (_) {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Theme is controlled by your system settings'),
-                            ),
-                          );
-                        },
-                        activeColor: AppTheme.primary,
-                        activeTrackColor: AppTheme.primary.withOpacity(0.5),
-                      ),
-                    ],
-                  ),
-                  
-                  const SizedBox(height: 40),
-                  
-                  // Font size selector
-                  Text(
-                    'Adjust font size',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w500,
-                      color: Theme.of(context).textTheme.bodyLarge?.color,
-                    ),
-                  ),
-                  
-        return Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF1E1E1E)
-                : Colors.white,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade400,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              const SizedBox(height: 20),
-              ListTile(
-                leading: const Icon(Icons.settings),
-                title: const Text('Settings', style: TextStyle(fontSize: 16)),
-                onTap: () {
-                  Navigator.pop(context); // Close the bottom sheet
-                  Navigator.pushNamed(context, '/settings');
-                },
-              ),
-              const SizedBox(height: 10),
-              ListTile(
-                leading: const Icon(Icons.logout, color: Colors.red),
-                title: const Text('Logout', style: TextStyle(fontSize: 16)),
-                onTap: () async {
-                  // Close the bottom sheet
-                  Navigator.pop(context);
-                  
-                  // Show loading dialog
-                  showDialog(
-                    context: context,
-                    barrierDismissible: false,
-                    builder: (context) => const Center(child: CircularProgressIndicator()),
-                  );
-                  
-                  try {
-                    // Perform logout
-                    final authService = AuthService();
-                    await authService.signOut();
-                    
-                    // Close loading dialog and navigate to login
-                    Navigator.pop(context); // Close loading dialog
-                    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-                  } catch (e) {
-                    // Close loading dialog and show error
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error logging out: $e')),
-                    );
-                  }
-                },
-              ),
-              const SizedBox(height: 10),
-              ListTile(
-                leading: const Icon(Icons.close),
-                title: const Text('Cancel', style: TextStyle(fontSize: 16)),
-                onTap: () {
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-        );
+        return CustomizationBottomSheet();
       },
     );
   }
@@ -561,5 +439,252 @@ class ProfileScreen extends ConsumerWidget {
         ),
       ],
     );
+  }
+}
+
+class CustomizationBottomSheet extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final selectedFontSize = ref.watch(selectedFontProvider);
+    
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: isDarkMode ? Colors.black : Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          const Text(
+            'Customization',
+            style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 40),
+          
+          // Dark theme toggle
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Enable dark theme',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w500,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                ),
+              ),
+              Switch(
+                value: isDarkMode,
+                onChanged: (_) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Theme is controlled by your system settings'),
+                    ),
+                  );
+                },
+                activeColor: AppTheme.primary,
+                activeTrackColor: AppTheme.primary.withOpacity(0.5),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 40),
+          
+          // Font size selector
+          Text(
+            'Adjust font size',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w500,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
+            ),
+          ),
+          
+          const SizedBox(height: 20),
+          
+          // Font Size Options
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              _buildFontSizeOption(
+                context, 
+                ref,
+                FontSize.small, 
+                selectedFontSize, 
+                14,
+              ),
+              const SizedBox(width: 16),
+              _buildFontSizeOption(
+                context, 
+                ref,
+                FontSize.medium, 
+                selectedFontSize, 
+                18,
+              ),
+              const SizedBox(width: 16),
+              _buildFontSizeOption(
+                context, 
+                ref,
+                FontSize.large, 
+                selectedFontSize, 
+                22,
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 40),
+          
+          const Divider(thickness: 1),
+          
+          const SizedBox(height: 40),
+          
+          // Logout Button
+          InkWell(
+            onTap: () => _handleLogout(context),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.logout,
+                  color: Colors.red,
+                  size: 28,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Log Out',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.red,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildFontSizeOption(
+    BuildContext context,
+    WidgetRef ref,
+    FontSize size,
+    FontSize selectedSize,
+    double fontSize,
+  ) {
+    final isSelected = size == selectedSize;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
+    return GestureDetector(
+      onTap: () {
+        // Update selected font size
+        ref.read(selectedFontProvider.notifier).state = size;
+        
+        // Update actual font size value
+        final fontSizeNotifier = ref.read(fontSizeProvider.notifier);
+        switch (size) {
+          case FontSize.small:
+            fontSizeNotifier.setFontSize(14.0);
+            break;
+          case FontSize.medium:
+            fontSizeNotifier.setFontSize(16.0);
+            break;
+          case FontSize.large:
+            fontSizeNotifier.setFontSize(20.0);
+            break;
+        }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Font size updated to ${size.name}'),
+            duration: const Duration(seconds: 1),
+          ),
+        );
+      },
+      child: Container(
+        width: 70,
+        height: 70,
+        decoration: BoxDecoration(
+          color: isDarkMode ? Colors.grey.shade900 : Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(12),
+          border: isSelected
+              ? Border.all(color: AppTheme.primary, width: 2)
+              : null,
+        ),
+        child: Center(
+          child: Text(
+            'Aa',
+            style: TextStyle(
+              fontSize: fontSize,
+              fontWeight: FontWeight.bold,
+              color: isSelected 
+                  ? AppTheme.primary
+                  : Theme.of(context).textTheme.bodyLarge?.color,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+  
+  void _handleLogout(BuildContext context) async {
+    Navigator.pop(context); // Close the bottom sheet
+    
+    // Show confirmation dialog
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Logout'),
+        content: const Text('Are you sure you want to log out?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+    
+    if (shouldLogout == true) {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+      
+      try {
+        // Perform logout
+        final authService = AuthService();
+        await authService.signOut();
+        
+        // Close loading dialog and navigate to login
+        Navigator.pop(context); // Close loading dialog
+        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      } catch (e) {
+        // Close loading dialog and show error
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error logging out: $e')),
+        );
+      }
+    }
   }
 }
