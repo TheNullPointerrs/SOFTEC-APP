@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../providers/task_provider.dart';
+import 'package:softechapp/models/task.dart';
+import 'package:softechapp/providers/task_provider.dart';
 import '../const/theme.dart';
 
 class TaskScreen extends ConsumerStatefulWidget {

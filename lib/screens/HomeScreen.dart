@@ -9,6 +9,9 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:softechapp/models/task.dart';
+import 'package:softechapp/screens/Addtask.dart';
+import 'package:softechapp/widegts/mood_input_modal.dart';
 import 'package:softechapp/screens/NotificationsScreen.dart';
 import 'package:lottie/lottie.dart';
 import 'package:speech_to_text/speech_to_text.dart';
@@ -18,7 +21,6 @@ import '../providers/quote_provider.dart';
 import '../providers/task_provider.dart';
 import '../providers/mood_provider.dart';
 import '../providers/calendar_provider.dart';
-import '../widgets/mood_input_modal.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -731,7 +733,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     label: "Text",
                     onTap: () {
                       Navigator.pop(context);
-                      _showTaskInputDialog(context, "");
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => AddTaskScreen()));
                     },
                   ),
                   _buildOptionButton(

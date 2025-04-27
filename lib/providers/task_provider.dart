@@ -1,91 +1,40 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-class Task {
-  final String id;
-  final String title;
-  final String description;
-  final DateTime dueDate;
-  final String category;
-  final bool isCompleted;
-  final String? colorCode;
-
-  Task({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.dueDate,
-    required this.category,
-    this.isCompleted = false,
-    this.colorCode,
-  });
-
-  Task copyWith({
-    String? id,
-    String? title,
-    String? description,
-    DateTime? dueDate,
-    String? category,
-    bool? isCompleted,
-    String? colorCode,
-  }) {
-    return Task(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      description: description ?? this.description,
-      dueDate: dueDate ?? this.dueDate,
-      category: category ?? this.category,
-      isCompleted: isCompleted ?? this.isCompleted,
-      colorCode: colorCode ?? this.colorCode,
-    );
-  }
-}
+import 'package:softechapp/models/task.dart';
+import 'package:softechapp/services/taskService.dart';
 
 class TaskNotifier extends StateNotifier<List<Task>> {
-  TaskNotifier() : super([
-    // Sample tasks for development
-    Task(
-      id: '1',
-      title: 'Watch figma latest video',
-      description: 'Learn about new features in Figma',
-      dueDate: DateTime.now(),
-      category: 'Design',
-      colorCode: '#FFAB00',
-    ),
-    Task(
-      id: '2',
-      title: 'Complete Flutter project',
-      description: 'Finish implementing all features',
-      dueDate: DateTime.now().add(const Duration(days: 1)),
-      category: 'Development',
-      isCompleted: true,
-      colorCode: '#FFAB00',
-    ),
-  ]);
+  final TaskService _taskService = TaskService(); // Instance of TaskService
 
-  void addTask(Task task) {
+  TaskNotifier() : super([]);
+
+  void addTask(Task task) async {
     state = [...state, task];
+    await _taskService.addTask(task); // Add task to Firestore
   }
 
-  void removeTask(String id) {
-    state = state.where((task) => task.id != id).toList();
+  void removeTask(String taskId) async {
+    state = state.where((task) => task.id != taskId).toList();
+    await _taskService.removeTask(taskId); // Remove task from Firestore
   }
 
-  void updateTask(Task updatedTask) {
-    state = state.map((task) {
-      if (task.id == updatedTask.id) {
-        return updatedTask;
-      }
-      return task;
-    }).toList();
+  void updateTask(Task updatedTask) async {
+    state = [
+      for (final task in state)
+        if (task.id == updatedTask.id) updatedTask else task
+    ];
+    await _taskService.updateTask(updatedTask); // Update task in Firestore
   }
 
-  void toggleTaskCompletion(String id) {
+  void toggleTaskCompletion(String id) async {
     state = state.map((task) {
       if (task.id == id) {
         return task.copyWith(isCompleted: !task.isCompleted);
       }
       return task;
     }).toList();
+    // Update task completion in Firestore
+    Task updatedTask = state.firstWhere((task) => task.id == id);
+    await _taskService.updateTask(updatedTask);
   }
 
   List<Task> getTasksByDate(DateTime date) {
@@ -101,6 +50,7 @@ class TaskNotifier extends StateNotifier<List<Task>> {
   }
 }
 
-final taskProvider = StateNotifierProvider<TaskNotifier, List<Task>>((ref) {
-  return TaskNotifier();
-}); 
+// Create the provider
+final taskProvider = StateNotifierProvider<TaskNotifier, List<Task>>(
+  (ref) => TaskNotifier(),
+);
