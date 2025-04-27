@@ -26,6 +26,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
 
   @override
   Widget build(BuildContext context) {
+        final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final tasks = ref.watch(taskProvider);
     final displayTasks = _filterTasks(tasks);
 
@@ -148,11 +149,13 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
   Widget _buildFilterChip(String label) {
     final isSelected = _selectedFilter == label;
     final colorScheme = Theme.of(context).colorScheme;
+      final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       margin: const EdgeInsets.only(right: 10),
       child: FilterChip(
         label: Text(label),
+        labelStyle: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
         selected: isSelected,
         backgroundColor: colorScheme.surface.withValues(alpha: 0.1),
         selectedColor: AppTheme.primary.withOpacity(0.2),

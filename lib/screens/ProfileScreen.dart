@@ -82,6 +82,7 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final textColor = Theme.of(context).textTheme.bodyLarge?.color;
     
     // Fetch user profile from Firebase Authentication
     final user = FirebaseAuth.instance.currentUser;
@@ -104,12 +105,6 @@ class ProfileScreen extends ConsumerWidget {
     final int totalTasks = tasksList.length;
     final int completedTasks = tasksList.where((task) => task.isCompleted).length;
 
-    // final workloadData = {
-    //   "Work": 20,
-    //   "Study": 15,
-    //   "Fitness": 65,
-    // };
-    
   // Generate workload data dynamically
   final Map<String, int> workloadData = {};
 
@@ -140,19 +135,19 @@ class ProfileScreen extends ConsumerWidget {
         final userName = user.name;
 
         return Scaffold(
-          backgroundColor: isDarkMode ? const Color(0xFF0B001F) : Colors.white,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
-            backgroundColor: Colors.black,
-            title: const Text(
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            title: Text(
               "Profile",
               style: TextStyle(
-                color: Colors.white,
+                color: textColor,
                 fontWeight: FontWeight.w500,
               ),
             ),
             actions: [
               IconButton(
-                icon: const Icon(Icons.menu, color: Colors.white),
+                icon: Icon(Icons.menu, color: textColor),
                 onPressed: () {
                   _showLogoutBottomSheet(context);
                 },
@@ -166,7 +161,7 @@ class ProfileScreen extends ConsumerWidget {
               children: [
                 // Profile Header
                 Container(
-                  color: Colors.black,
+                  color: Theme.of(context).colorScheme.surface,
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
@@ -193,10 +188,10 @@ class ProfileScreen extends ConsumerWidget {
                               children: [
                                 Text(
                                   userName,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 32,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: textColor,
                                   ),
                                 ),
                                 const SizedBox(height: 5),
@@ -204,16 +199,16 @@ class ProfileScreen extends ConsumerWidget {
                                   "$completedTasks Tasks Completed",
                                   style: TextStyle(
                                     fontSize: 14,
-                                    color: Colors.grey.shade400,
+                                    color: Theme.of(context).textTheme.bodyMedium?.color,
                                   ),
                                 ),
                                 const SizedBox(height: 5),
                                 Text(
                                   "$completedTasks/$totalTasks Tasks",
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: textColor,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -222,7 +217,7 @@ class ProfileScreen extends ConsumerWidget {
                                   borderRadius: BorderRadius.circular(10),
                                   child: LinearProgressIndicator(
                                     value: totalTasks == 0 ? 0 : completedTasks / totalTasks,
-                                    backgroundColor: Colors.grey.shade800,
+                                    backgroundColor: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade300,
                                     valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primary),
                                     minHeight: 10,
                                   ),
@@ -242,12 +237,12 @@ class ProfileScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         "Progress Tracker",
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: textColor,
                         ),
                       ),
 
@@ -297,20 +292,20 @@ class ProfileScreen extends ConsumerWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   "Workload balance",
                                   style: TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: textColor,
                                   ),
                                 ),
                                 const SizedBox(height: 15),
-                                _buildLegendItem(AppTheme.primary, "Work"),
+                                _buildLegendItem(AppTheme.primary, "Work", textColor),
                                 const SizedBox(height: 10),
-                                _buildLegendItem(Colors.green, "Study"),
+                                _buildLegendItem(Colors.green, "Study", textColor),
                                 const SizedBox(height: 10),
-                                _buildLegendItem(Colors.amber, "General"),
+                                _buildLegendItem(Colors.amber, "General", textColor),
                               ],
                             ),
                           ),
@@ -323,7 +318,7 @@ class ProfileScreen extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade900,
+                          color: isDarkMode ? Colors.grey.shade900 : Colors.grey.shade200,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Column(
@@ -332,12 +327,12 @@ class ProfileScreen extends ConsumerWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
+                                Text(
                                   "Task Streak",
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: textColor,
                                   ),
                                 ),
                                 Row(
@@ -346,7 +341,7 @@ class ProfileScreen extends ConsumerWidget {
                                       "Less",
                                       style: TextStyle(
                                         fontSize: 12,
-                                        color: Colors.grey.shade400,
+                                        color: Theme.of(context).textTheme.bodyMedium?.color,
                                       ),
                                     ),
                                     Container(
@@ -356,7 +351,7 @@ class ProfileScreen extends ConsumerWidget {
                                       decoration: BoxDecoration(
                                         gradient: LinearGradient(
                                           colors: [
-                                            Colors.grey.shade800,
+                                            isDarkMode ? Colors.grey.shade800 : Colors.grey.shade300,
                                             AppTheme.primary,
                                           ],
                                         ),
@@ -367,7 +362,7 @@ class ProfileScreen extends ConsumerWidget {
                                       "More",
                                       style: TextStyle(
                                         fontSize: 12,
-                                        color: Colors.grey.shade400,
+                                        color: Theme.of(context).textTheme.bodyMedium?.color,
                                       ),
                                     ),
                                   ],
@@ -388,7 +383,7 @@ class ProfileScreen extends ConsumerWidget {
                                 "Task Streak Of $currentMonth",
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: Colors.grey.shade400,
+                                  color: Theme.of(context).textTheme.bodyMedium?.color,
                                 ),
                               ),
                             ),
@@ -419,7 +414,7 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildLegendItem(Color color, String title) {
+  Widget _buildLegendItem(Color color, String title, Color? textColor) {
     return Row(
       children: [
         Container(
@@ -433,10 +428,10 @@ class ProfileScreen extends ConsumerWidget {
         const SizedBox(width: 10),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: textColor,
           ),
         ),
       ],
@@ -458,7 +453,7 @@ class CustomizationBottomSheet extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDarkMode ? Colors.black : Colors.white,
+        color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(20),
           topRight: Radius.circular(20),

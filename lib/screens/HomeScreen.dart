@@ -131,7 +131,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               color: isDarkMode ? Colors.black : Colors.white,
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(Icons.calendar_today, color: Colors.white),
+                            child:  Icon(Icons.calendar_today, color: isDarkMode ? Colors.white : Colors.black),
                           ),
                           const SizedBox(width: 10),
                           Column(
@@ -166,7 +166,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             color: isDarkMode ? Colors.black : Colors.white,
                             borderRadius: BorderRadius.circular(50),
                           ),
-                          child: const Icon(Icons.notifications_outlined, color: Colors.white),
+                          child: Icon(Icons.notifications_outlined, color: isDarkMode ? Colors.white : Colors.black),
                         ),
                       ),
                     ],

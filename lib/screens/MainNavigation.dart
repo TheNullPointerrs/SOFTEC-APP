@@ -88,13 +88,13 @@ class _MainNavigationState extends State<MainNavigation> {
       ),
       PersistentBottomNavBarItem(
         icon: Container(
-          width: 26,
-          height: 26,
+          width: 30,
+          height: 30,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
               color: _controller.index == 4 ? AppTheme.primary : Colors.transparent,
-              width: 2,
+              width: 1,
             ),
           ),
           child: ClipRRect(

@@ -12,10 +12,10 @@ class NotesListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notesAsync = ref.watch(notesProvider);
     final colorScheme = Theme.of(context).colorScheme;
-
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Your Notes'),
+        title: const Text('Your Notes', style: TextStyle(color: Colors.white)),
         backgroundColor: colorScheme.primary, // Modern background color
         elevation: 5, // Add shadow to the app bar for better separation
       ),
