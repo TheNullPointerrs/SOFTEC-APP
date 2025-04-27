@@ -179,6 +179,7 @@ void _saveTask() async {
     DateTime notificationTime = dueDate.subtract(const Duration(hours: 12));
     // Only schedule if notification time is in the future
     if (notificationTime.isAfter(DateTime.now())) {
+      LocalNotifications.localNotiInit();
       await LocalNotifications.showScheduleNotification(
         title: 'Task Reminder',
         body: 'Your task "$title" is due in 12 hours',

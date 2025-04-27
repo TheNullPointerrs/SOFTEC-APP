@@ -16,14 +16,14 @@ import 'package:softechapp/screens/NotificationsScreen.dart';
 import 'package:lottie/lottie.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
-import 'package:flutter_tts/flutter_tts.dart';
-import 'package:path_provider/path_provider.dart';
 import '../const/theme.dart';
 import '../providers/quote_provider.dart';
 import '../providers/task_provider.dart';
 import '../providers/mood_provider.dart';
 import '../providers/calendar_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
+import '../services/firebase_storage_service.dart';
+import '../services/ocr_service.dart';
+import '../utils/image_picker_utils.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -33,61 +33,10 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  // Add speech to text functionality
-  SpeechToText _speechToText = SpeechToText();
-  bool _isListening = false;
-  
-  // Add text to speech functionality
-  FlutterTts _flutterTts = FlutterTts();
-  bool _isSpeaking = false;
 
-  // Initialize TTS
-  Future<void> _initTts() async {
-    try {
-      await _flutterTts.setLanguage("en-US");
-      await _flutterTts.setPitch(1.0);
-      await _flutterTts.setSpeechRate(0.5);
-      await _flutterTts.setVolume(1.0);
-      
-      // Debug: test TTS with a simple phrase
-      print("Testing TTS initialization...");
-      await _flutterTts.speak("Text to speech initialized");
-      
-      _flutterTts.setCompletionHandler(() {
-        setState(() {
-          _isSpeaking = false;
-        });
-      });
-      
-      print("TTS initialized successfully");
-    } catch (e) {
-      print("TTS initialization error: $e");
-    }
-  }
-  
-  // Speak text
-  Future<void> _speak(String text) async {
-    if (text.isEmpty) return;
-
-    try {
-      print("Speaking text: $text");
-      if (_isSpeaking) {
-        await _flutterTts.stop();
-      }
-      
-      setState(() {
-        _isSpeaking = true;
-      });
-      
-      await _flutterTts.speak(text);
-    } catch (e) {
-      print("TTS Error: $e");
-      setState(() {
-        _isSpeaking = false;
-      });
-      _showErrorDialog("Text-to-speech error: ${e.toString()}");
-    }
-  }
+    final FirebaseStorageService _firebaseStorageService = FirebaseStorageService();
+  final OCRService _ocrService = OCRService();
+  final ImagePickerUtils _imagePickerUtils = ImagePickerUtils();
   
   @override
   void initState() {
@@ -95,9 +44,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Fetch quote when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(quoteProvider.notifier).fetchQuote();
-      
-      // Initialize TTS
-      _initTts();
       
       // Ensure mood data is loaded from Firebase
       final moodData = ref.read(moodStreamProvider);
@@ -348,18 +294,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               ),
                           ],
                         ),
-                      ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.volume_up,
-                          color: Colors.white,
-                        ),
-                        onPressed: () {
-                          final quoteText = quote['text'] ?? "Believe you can and you're halfway there";
-                          final author = quote['author'] != null && quote['author'].isNotEmpty 
-                                      ? "by ${quote['author']}" : "";
-                          _speak("$quoteText $author");
-                        },
                       ),
                     ],
                   ),
@@ -868,240 +802,62 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
     );
   }
-  
+ 
   Future<void> _captureAndProcessImage() async {
     try {
-      final ImagePicker picker = ImagePicker();
-      
-      // For handling image selection
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Image Source'),
-          content: const Text('Would you like to take a new photo or use an existing one?'),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                Navigator.of(context).pop();
-                
-                final XFile? photo = await picker.pickImage(source: ImageSource.camera);
-                if (photo != null) {
-                  _processSelectedImage(File(photo.path));
-                }
-              },
-              child: const Text('Camera'),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.of(context).pop();
-                
-                final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-                if (image != null) {
-                  _processSelectedImage(File(image.path));
-                }
-              },
-              child: const Text('Gallery'),
-            ),
-          ],
-        ),
-      );
+      // Pick an image from gallery or camera
+      File? imageFile = await _imagePickerUtils.pickImageFromGallery();
+      if (imageFile == null) return;
+
+      // Upload image to Firebase Storage
+      String imageUrl = await _firebaseStorageService.uploadImage(imageFile);
+
+      // Send image URL to OCR API
+      String extractedText = await _ocrService.sendImageUrlToOCR(imageUrl);
+
+      // Show the extracted text
+      _showExtractedTextDialog(extractedText);
     } catch (e) {
       _showErrorDialog("Error: $e");
     }
   }
-  
-  Future<void> _processSelectedImage(File imageFile) async {
-    try {
-      _showLoadingDialog(context, "Processing image...");
-      
-      // Check if file exists
-      if (!await imageFile.exists()) {
-        // Close loading dialog
-        Navigator.of(context).pop();
-        _showErrorDialog("Image file not found. Please try again.");
-        return;
-      }
-      
-      print("Processing image: ${imageFile.path}");
-      print("File size: ${await imageFile.length()} bytes");
-      
-      // Send the image to the OCR API with retries
-      String extractedText = '';
-      int retryCount = 0;
-      const maxRetries = 3;
-      bool success = false;
-      
-      while (retryCount < maxRetries && !success) {
-        try {
-          extractedText = await _sendImageToAPI(imageFile);
-          success = true;
-        } catch (apiError) {
-          retryCount++;
-          print("OCR API call failed (attempt $retryCount/$maxRetries): $apiError");
-          
-          if (retryCount >= maxRetries) {
-            // Close the loading dialog if it's open
-            if (mounted) Navigator.of(context).pop();
-            _showErrorDialog("Error with OCR service after $maxRetries attempts: ${apiError.toString()}");
-            return;
-          }
-          
-          // Wait before retrying
-          await Future.delayed(Duration(seconds: 2 * retryCount));
-        }
-      }
-      
-      // Close the loading dialog
-      if (mounted) Navigator.of(context).pop();
-      
-      print("Extracted text: $extractedText");
-      
-      // Show the task input dialog with the extracted text
-      if (extractedText.isNotEmpty) {
-        _showTaskInputDialog(context, extractedText);
-      } else {
-        _showErrorDialog("No text was detected in the image. Please try another image.");
-      }
-    } catch (e) {
-      // Close the loading dialog if it's open
-      if (mounted) Navigator.of(context).pop();
-      _showErrorDialog("Error processing image: ${e.toString()}");
-    }
-  }
-  
-  Future<String> _sendImageToAPI(File file) async {
-    // Use the deployed server URL
-    final url = Uri.parse("https://softec-backend.onrender.com/ocr/");
-    
-    print("Sending OCR request to: $url");
-    print("Image file path: ${file.path}");
-    print("Image file exists: ${await file.exists()}");
-    print("Image file size: ${await file.length()} bytes");
-    
-    try {
-      // Create a multipart request
-      final request = http.MultipartRequest('POST', url);
-      
-      // Add the file to the request
-      final multipartFile = await http.MultipartFile.fromPath('file', file.path);
-      print("Multipart file created: ${multipartFile.filename}, length: ${multipartFile.length}");
-      request.files.add(multipartFile);
-      
-      // Add headers to handle redirects
-      request.headers['Accept'] = 'application/json';
-      
-      // Set timeout and handle redirects manually
-      http.Client client = http.Client();
-      try {
-        // Send the request with a longer timeout
-        final responseStream = await request.send().timeout(
-          const Duration(seconds: 120), // Extended timeout
-          onTimeout: () {
-            throw Exception('Request timed out. The server may be busy, please try again later.');
-          },
+
+  void _showExtractedTextDialog(String extractedText) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Extracted Text'),
+          content: Text(extractedText),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
         );
-        
-        // Handle redirects manually if needed
-        if (responseStream.statusCode == 307 || 
-            responseStream.statusCode == 301 || 
-            responseStream.statusCode == 302 || 
-            responseStream.statusCode == 303) {
-          
-          print('Received redirect response: ${responseStream.statusCode}');
-          
-          // Get the redirect location
-          String? location = responseStream.headers['location'];
-          if (location != null) {
-            print('Redirecting to: $location');
-            
-            // Create a new request to the redirect location
-            final redirectUrl = Uri.parse(location);
-            final redirectRequest = http.MultipartRequest('POST', redirectUrl);
-            
-            // Copy files from original request
-            for (var file in request.files) {
-              redirectRequest.files.add(await http.MultipartFile.fromPath(
-                file.field, file.filename!));
-            }
-            
-            // Copy headers
-            redirectRequest.headers.addAll(request.headers);
-            
-            // Send the redirect request
-            final redirectResponse = await redirectRequest.send().timeout(
-              const Duration(seconds: 120),
-              onTimeout: () {
-                throw Exception('Redirect request timed out.');
-              },
-            );
-            
-            final redirectBody = await redirectResponse.stream.bytesToString();
-            
-            if (redirectResponse.statusCode == 200) {
-              try {
-                final jsonData = jsonDecode(redirectBody);
-                final extractedText = jsonData['extracted_text'] ?? '';
-                return extractedText.isEmpty ? 
-                  'No text was detected in the image. Please try another image.' : 
-                  extractedText;
-              } catch (e) {
-                print('JSON parsing error after redirect: $e');
-                throw Exception('Error parsing API response after redirect: $e');
-              }
-            } else {
-              throw Exception('Redirect failed with status code: ${redirectResponse.statusCode}');
-            }
-          } else {
-            throw Exception('Received redirect without location header');
-          }
-        }
-        
-        // Get response status and body for original request (if not redirected)
-        final statusCode = responseStream.statusCode;
-        final responseBody = await responseStream.stream.bytesToString();
-        
-        print('OCR API Response Code: $statusCode');
-        print('OCR API Response: $responseBody');
-        
-        if (statusCode == 200) {
-          try {
-            // Parse response
-            final jsonData = jsonDecode(responseBody);
-            
-            // Extract text
-            final extractedText = jsonData['extracted_text'] ?? '';
-            
-            if (extractedText.isEmpty) {
-              return 'No text was detected in the image. Please try another image.';
-            }
-            
-            return extractedText;
-          } catch (e) {
-            print('JSON parsing error: $e');
-            throw Exception('Error parsing API response: $e');
-          }
-        } else if (statusCode >= 500) {
-          print('Server error: $statusCode');
-          throw Exception('The OCR server is currently down or overloaded (Error $statusCode). Please try again later.');
-        } else if (statusCode == 404) {
-          print('Endpoint not found: $statusCode');
-          throw Exception('The OCR service endpoint was not found (Error 404). Please check the deployment URL.');
-        } else if (statusCode == 429) {
-          print('Rate limited: $statusCode');
-          throw Exception('Too many requests to the OCR service. Please try again later.');
-        } else {
-          print('Server returned error code: $statusCode');
-          print('Response body: $responseBody');
-          throw Exception('Server error: $statusCode. Please try again later.');
-        }
-      } finally {
-        client.close();
-      }
-    } catch (e) {
-      print('Exception in OCR: $e');
-      throw Exception('Error processing image: $e');
-    }
+      },
+    );
   }
+
+  void _showErrorDialog(String error) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Error'),
+          content: Text(error),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   
   void _showLoadingDialog(BuildContext context, String message) {
     showDialog(
@@ -1120,21 +876,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
   
-  void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Error'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
+  
   
   void _showTaskInputDialog(BuildContext context, String taskText) {
     final TextEditingController titleController = TextEditingController(text: taskText);
@@ -1149,19 +891,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         
         return AlertDialog(
           backgroundColor: isDarkMode ? const Color(0xFF262626) : Colors.white,
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Add Task'),
-              IconButton(
-                icon: Icon(Icons.volume_up, color: AppTheme.primary),
-                onPressed: () {
-                  _speak(titleController.text);
-                },
-                tooltip: 'Speak Task',
-              ),
-            ],
-          ),
+          title: const Text('Add Task'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1244,43 +974,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  // Add speech to text functionality
+  final SpeechToText _speechToText = SpeechToText();
+  bool _isListening = false;
+  
   Future<void> _startVoiceInput() async {
-    // Check microphone permission first
-    bool permissionGranted = await _checkMicrophonePermission();
-    if (!permissionGranted) {
-      _showErrorDialog("Microphone permission is required for voice input");
-      return;
-    }
-    
     Navigator.pop(context);
     _showVoiceInputDialog(context);
-  }
-  
-  Future<bool> _checkMicrophonePermission() async {
-    try {
-      // First check if permission is available through permission_handler
-      PermissionStatus status = await Permission.microphone.request();
-      if (status != PermissionStatus.granted) {
-        print('Microphone permission denied: $status');
-        return false;
-      }
-      
-      // Initialize speech recognition to trigger permission request
-      bool available = await _speechToText.initialize(
-        onStatus: (status) {
-          print('Permission check status: $status');
-        },
-        onError: (error) {
-          print('Permission check error: $error');
-        },
-      );
-      
-      print('Microphone permission check result: $available');
-      return available;
-    } catch (e) {
-      print('Error checking microphone permission: $e');
-      return false;
-    }
   }
   
   void _showVoiceInputDialog(BuildContext context) {
@@ -1367,20 +1067,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 },
                 child: const Text('Cancel'),
               ),
-              if (recognizedText.isNotEmpty)
-                TextButton(
-                  onPressed: () {
-                    _speak(recognizedText);
-                  },
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.volume_up, size: 16, color: AppTheme.primary),
-                      const SizedBox(width: 4),
-                      const Text('Speak'),
-                    ],
-                  ),
-                ),
               TextButton(
                 onPressed: () {
                   _stopListening();
@@ -1415,82 +1101,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     _isListening = true;
     
     try {
-      // Force stop any previous instance
-      if (_speechToText.isListening) {
-        await _speechToText.stop();
-      }
-      
-      // Create a new instance if needed
-      if (!_speechToText.isAvailable) {
-        _speechToText = SpeechToText();
-        
-        // Initialize with basic options to avoid network errors
-        await _speechToText.initialize(
-          onStatus: (status) {
-            print('Speech status: $status');
-            if (status == 'done' || status == 'notListening') {
-              _isListening = false;
-            }
-          },
-          onError: (errorNotification) {
-            print('Speech error: $errorNotification');
+      final speech = SpeechToText();
+      bool available = await speech.initialize(
+        onStatus: (status) {
+          print('Speech status: $status');
+          if (status == 'done') {
             _isListening = false;
-            
-            // Don't show dialog for network errors - they're common and expected
-            if (!errorNotification.errorMsg.contains('network')) {
-              _showErrorDialog("Speech recognition error: ${errorNotification.errorMsg}");
-            }
-          },
-          debugLogging: true,
-        ).timeout(
-          const Duration(seconds: 15),
-          onTimeout: () {
-            print('Speech initialization timed out');
-            return false;
           }
-        );
-      }
+        },
+        onError: (error) {
+          print('Speech error: $error');
+          _isListening = false;
+        },
+      );
       
-      if (_speechToText.isAvailable) {
-        // Start listening with options to improve reliability
-        await _speechToText.listen(
+      if (available) {
+        speech.listen(
           onResult: (result) {
             final recognizedWords = result.recognizedWords;
-            print('Recognized: $recognizedWords');
             onResult(recognizedWords);
           },
           listenFor: const Duration(seconds: 30),
           pauseFor: const Duration(seconds: 5),
           partialResults: true,
-          cancelOnError: false, // Don't cancel automatically on network errors
-          localeId: 'en_US', // Specify language
+          cancelOnError: true,
+          listenMode: ListenMode.confirmation,
         );
-        
-        print('Listening started successfully');
       } else {
         print('Speech recognition not available');
-        _isListening = false;
-        _showErrorDialog("Speech recognition not available on this device. Please check your microphone permission and internet connection.");
       }
     } catch (e) {
       print('Error starting speech recognition: $e');
       _isListening = false;
-      _showErrorDialog("Error starting speech recognition: ${e.toString()}");
     }
   }
   
   void _stopListening() {
     _isListening = false;
-    if (_speechToText.isListening) {
-      _speechToText.stop();
-    }
-  }
-
-  @override
-  void dispose() {
-    // Release resources
-    _flutterTts.stop();
-    
-    super.dispose();
+    SpeechToText().stop();
   }
 }
