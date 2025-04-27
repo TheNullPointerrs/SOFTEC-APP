@@ -3,36 +3,46 @@ import 'package:softechapp/models/task.dart';
 import 'package:softechapp/services/taskService.dart';
 
 class TaskNotifier extends StateNotifier<List<Task>> {
-  final TaskService _taskService = TaskService(); // Instance of TaskService
+  final TaskService _taskService = TaskService();
 
-  TaskNotifier() : super([]);
+  TaskNotifier() : super([]) {
+    fetchTasks();
+  }
 
-  void addTask(Task task) async {
+  Future<void> fetchTasks() async {
+    try {
+      final tasks = await _taskService.getTasks();
+      state = tasks;
+    } catch (e) {
+      print("Error fetching tasks: $e");
+    }
+  }
+
+  Future<void> addTask(Task task) async {
     state = [...state, task];
-    await _taskService.addTask(task); // Add task to Firestore
+    await _taskService.addTask(task);
   }
 
-  void removeTask(String taskId) async {
+  Future<void> removeTask(String taskId) async {
     state = state.where((task) => task.id != taskId).toList();
-    await _taskService.removeTask(taskId); // Remove task from Firestore
+    await _taskService.removeTask(taskId);
   }
 
-  void updateTask(Task updatedTask) async {
+  Future<void> updateTask(Task updatedTask) async {
     state = [
       for (final task in state)
         if (task.id == updatedTask.id) updatedTask else task
     ];
-    await _taskService.updateTask(updatedTask); // Update task in Firestore
+    await _taskService.updateTask(updatedTask);
   }
 
-  void toggleTaskCompletion(String id) async {
+  Future<void> toggleTaskCompletion(String id) async {
     state = state.map((task) {
       if (task.id == id) {
         return task.copyWith(isCompleted: !task.isCompleted);
       }
       return task;
     }).toList();
-    // Update task completion in Firestore
     Task updatedTask = state.firstWhere((task) => task.id == id);
     await _taskService.updateTask(updatedTask);
   }
@@ -50,7 +60,6 @@ class TaskNotifier extends StateNotifier<List<Task>> {
   }
 }
 
-// Create the provider
 final taskProvider = StateNotifierProvider<TaskNotifier, List<Task>>(
   (ref) => TaskNotifier(),
 );
