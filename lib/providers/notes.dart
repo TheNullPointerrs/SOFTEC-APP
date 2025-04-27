@@ -4,7 +4,7 @@ import 'package:softechapp/models/note.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 final notesProvider = StreamProvider<List<NoteModel>>((ref) {
-  final userId = FirebaseAuth.instance.currentUser!.uid; // replace it with your auth user id
+  final userId = FirebaseAuth.instance.currentUser!.uid;
   return FirebaseFirestore.instance
       .collection('users')
       .doc(userId)

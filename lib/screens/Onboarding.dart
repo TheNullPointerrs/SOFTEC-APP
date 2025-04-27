@@ -48,7 +48,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     
-    // Get the appropriate font size based on user selection
     double getFontSize() {
       switch (selectedFont) {
         case FontSize.small:
@@ -66,14 +65,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       backgroundColor: colorScheme.surface,
       body: Stack(
         children: [
-          const CenterGlow(), // Extracted Glow Widget
+          const CenterGlow(),
 
           Center(
             child: SingleChildScrollView(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Animated Robot Image
                   AnimatedBuilder(
                     animation: _controller,
                     builder: (context, child) {
@@ -93,7 +91,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
 
                   const SizedBox(height: 24),
 
-                  // App Title
                   RichText(
                     textAlign: TextAlign.center,
                     text: TextSpan(
@@ -121,7 +118,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
 
                   const SizedBox(height: 12),
 
-                  // Description
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 32.0),
                     child: Text(
@@ -137,7 +133,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
 
                   const SizedBox(height: 40),
 
-                  // Login Button
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 32.0),
                     child: OutlinedButton(
@@ -166,7 +161,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
 
                   const SizedBox(height: 16),
 
-                  // Sign Up Button
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 32.0),
                     child: SizedBox(

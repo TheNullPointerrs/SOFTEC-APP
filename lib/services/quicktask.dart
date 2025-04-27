@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:http/http.dart' as http;
 
 class TaskParseService {
@@ -11,6 +12,7 @@ class TaskParseService {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'text': taskText}),
       );
+      log(response.body);
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
@@ -24,7 +26,7 @@ class TaskParseService {
       } else {
         throw Exception('Failed to parse task: ${response.statusCode}');
       }
-    } catch (e) {
+    } catch (e) { 
       throw Exception('Error parsing task: $e');
     }
   }

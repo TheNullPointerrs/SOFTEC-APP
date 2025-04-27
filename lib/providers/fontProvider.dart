@@ -7,7 +7,7 @@ enum FontSize {
 }
 
 class FontSizeNotifier extends StateNotifier<double> {
-  FontSizeNotifier() : super(16.0); // Default font size
+  FontSizeNotifier() : super(16.0);
 
   void setFontSize(double newSize) {
     state = newSize;
@@ -18,12 +18,10 @@ class FontSizeNotifier extends StateNotifier<double> {
   double get large => 20.0;
 }
 
-// Global provider
 final fontSizeProvider = StateNotifierProvider<FontSizeNotifier, double>((ref) {
   return FontSizeNotifier();
 });
 
-// Selected font size provider
 final selectedFontProvider = StateProvider<FontSize>((ref) {
   final fontSize = ref.watch(fontSizeProvider);
   

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:softechapp/providers/notes.dart';
 import 'package:softechapp/screens/add_note.dart';
 import 'package:softechapp/screens/notedetail.dart';
-import 'package:intl/intl.dart'; // Add this import for date formatting
+import 'package:intl/intl.dart'; 
 
 class NotesListScreen extends ConsumerWidget {
   const NotesListScreen({super.key});
@@ -12,17 +12,15 @@ class NotesListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notesAsync = ref.watch(notesProvider);
     final colorScheme = Theme.of(context).colorScheme;
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Your Notes', style: TextStyle(color: Colors.white)),
-        backgroundColor: colorScheme.primary, // Modern background color
-        elevation: 5, // Add shadow to the app bar for better separation
+        backgroundColor: colorScheme.primary, 
+        elevation: 5, 
       ),
       body: notesAsync.when(
         data: (notes) {
-          // Format the 'createdAt' for better readability
-          final dateFormat = DateFormat('yyyy-MM-dd HH:mm'); // Example format
+          final dateFormat = DateFormat('yyyy-MM-dd HH:mm'); 
 
           return ListView.builder(
             itemCount: notes.length,
@@ -38,21 +36,21 @@ class NotesListScreen extends ConsumerWidget {
                 ),
                 elevation: 3, // Add shadow for a lifted effect
                 child: ListTile(
-                  contentPadding: const EdgeInsets.all(16), // Padding inside the card
+                  contentPadding: const EdgeInsets.all(16),
                   title: Text(
                     note.rawNote.length > 30
                         ? '${note.rawNote.substring(0, 30)}...'
                         : note.rawNote,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 16, // Larger font size for title
+                      fontSize: 16, 
                     ),
                   ),
                   subtitle: Text(
-                    formattedDate, // Display the formatted date
+                    formattedDate, 
                     style: const TextStyle(
                       color: Colors.grey,
-                      fontSize: 14, // Slightly smaller font for the date
+                      fontSize: 14, 
                     ),
                   ),
                   onTap: () {
@@ -78,8 +76,8 @@ class NotesListScreen extends ConsumerWidget {
             MaterialPageRoute(builder: (_) => const AddNoteScreen()),
           );
         },
-        backgroundColor: colorScheme.primary, // Match with app bar color
-        child: const Icon(Icons.add, size: 30), // Bigger icon
+        backgroundColor: colorScheme.primary,
+        child: const Icon(Icons.add, size: 30), 
       ),
     );
   }

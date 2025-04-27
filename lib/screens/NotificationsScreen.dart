@@ -4,7 +4,7 @@ import '../const/theme.dart';
 import 'package:intl/intl.dart';
 import 'package:softechapp/providers/task_provider.dart';
 import 'package:softechapp/models/task.dart';
-import 'package:softechapp/widgets/FontSizeConsumer.dart';
+import 'package:softechapp/widegts/FontSizeConsumer.dart';
 
 // Notification Models
 class TaskReminderNotification {
@@ -369,7 +369,7 @@ class NotificationScreen extends ConsumerWidget {
               IconButton(
                 icon: const Icon(Icons.calendar_today, color: Colors.red),
                 onPressed: () {
-                  // Reschedule task functionality could be added here
+                  
                 },
               ),
               IconButton(

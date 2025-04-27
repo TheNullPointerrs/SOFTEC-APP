@@ -41,7 +41,7 @@ class TaskService {
     try {
       final response = await http.post(
         Uri.parse('https://softec-backend.onrender.com/categorize-task'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/html'},
         body: json.encode({
           'text': taskTitle,
         }),

@@ -67,13 +67,14 @@
 		</dict>
 	</array>
 
-	<!-- Microphone and Speech Recognition permissions -->
-	<key>NSMicrophoneUsageDescription</key>
-	<string>This app needs access to your microphone for voice tasks</string>
-	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>This app uses speech recognition to convert your voice to text</string>
 
-	<!-- Allow HTTP connections for development -->
+
+	<!-- Allow HTTP connections for development -->	<!-- Add to ios/Runner/Info.plist -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs access to your microphone to record voice input for creating tasks.</string>
+	
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>This app needs access to speech recognition to convert your voice to text for creating tasks.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>

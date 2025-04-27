@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:softechapp/services/quicktask.dart';
 
-// Define the state for task parsing
 class TaskParseState {
   final bool isLoading;
   final List<TaskEntity>? entities;
@@ -47,7 +46,6 @@ class TaskParseNotifier extends StateNotifier<TaskParseState> {
   }
 }
 
-// Provider definition
 final taskParseProvider = StateNotifierProvider<TaskParseNotifier, TaskParseState>((ref) {
   return TaskParseNotifier(TaskParseService());
 });

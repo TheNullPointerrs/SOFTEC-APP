@@ -3,21 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'dart:convert';
 import 'dart:io';
-import 'dart:math' as math;
-import 'package:http/http.dart' as http;
-import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:softechapp/models/task.dart';
 import 'package:softechapp/screens/Addtask.dart';
 import 'package:softechapp/screens/TaskScreen.dart';
 import 'package:softechapp/screens/quicktask.dart';
+import 'package:softechapp/services/auth.dart';
 import 'package:softechapp/widegts/mood_input_modal.dart';
 import 'package:softechapp/screens/NotificationsScreen.dart';
 import 'package:lottie/lottie.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-import 'package:speech_to_text/speech_recognition_result.dart';
 import '../const/theme.dart';
 import '../providers/quote_provider.dart';
 import '../providers/task_provider.dart';
@@ -98,8 +94,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Get ongoing tasks
     final ongoingTasks = tasks.where((task) => !task.isCompleted).toList();
     
-    // Get mood entries for display
-    final moodHistory = moodEntries.take(3).toList();
     
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -175,7 +169,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 
                 const SizedBox(height: 30),
                 
-                // Date Display
                 Text(
                   DateFormat('MMMM d, yyyy').format(selectedDate),
                   style: TextStyle(
@@ -200,7 +193,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       return GestureDetector(
                         onTap: () {
                           ref.read(selectedDateProvider.notifier).state = date;
-                          // Navigate to TaskScreen with the selected date
                           Navigator.push(
                             context,
                             MaterialPageRoute(

@@ -71,7 +71,7 @@ class _QuickTaskScreenState extends ConsumerState<QuickTaskScreen> {
                 backgroundColor: AppTheme.primary,
                 minimumSize: const Size(double.infinity, 50),
               ),
-              child: const Text('Parse Task'),
+              child: const Text('Add Task'),
             ),
             const SizedBox(height: 20),
             if (parseState.isLoading)

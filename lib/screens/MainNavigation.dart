@@ -4,7 +4,6 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:softechapp/screens/HomeScreen.dart';
 import 'package:softechapp/screens/TaskScreen.dart';
 import 'package:softechapp/screens/CalendarScreen.dart';
-import 'package:softechapp/screens/JournalScreen.dart';
 import 'package:softechapp/screens/ProfileScreen.dart';
 import 'package:softechapp/screens/notesList.dart';
 import '../const/theme.dart';

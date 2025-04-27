@@ -10,7 +10,7 @@ import 'package:softechapp/screens/Onboarding.dart';
 import 'package:softechapp/services/auth.dart';
 import 'package:intl/intl.dart';
 import 'package:softechapp/providers/fontProvider.dart';
-import 'package:softechapp/widgets/FontSizeConsumer.dart';
+import 'package:softechapp/widegts/FontSizeConsumer.dart';
 
 
 // Custom widget for contribution grid
@@ -36,7 +36,6 @@ class ActivityGrid extends StatelessWidget {
     
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Calculate cell size to fill the available width
         final availableWidth = constraints.maxWidth;
         final calculatedCellSize = (availableWidth - (spacing * (columns - 1))) / columns;
         
@@ -182,7 +181,6 @@ class ProfileScreen extends ConsumerWidget {
                             ),
                           ),
                           const SizedBox(width: 20),
-                          // User info
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
