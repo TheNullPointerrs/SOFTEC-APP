@@ -59,7 +59,7 @@ class _MainNavigationState extends State<MainNavigation> {
       const TaskScreen(),
       const CalendarScreen(),
       NotesListScreen(),
-      const ProfileScreen(),
+      ProfileScreen(),
     ];
   }
 
