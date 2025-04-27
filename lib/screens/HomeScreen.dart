@@ -1,11 +1,18 @@
+// ignore_for_file: invalid_use_of_protected_member
+
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:softechapp/screens/NotificationsScreen.dart';
+import 'package:lottie/lottie.dart';
+import 'package:speech_to_text/speech_to_text.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
 import '../const/theme.dart';
 import '../providers/quote_provider.dart';
 import '../providers/task_provider.dart';
@@ -137,13 +144,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                         ],
                       ),
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: isDarkMode ? Colors.black : Colors.white,
-                          borderRadius: BorderRadius.circular(50),
+                      GestureDetector(
+                        onTap: (){
+                          // Navigator.of(context).pushNamed('/notificationsScreen');
+
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => NotificationScreen()));
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: isDarkMode ? Colors.black : Colors.white,
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                          child: const Icon(Icons.notifications_outlined, color: Colors.white),
                         ),
-                        child: const Icon(Icons.notifications_outlined, color: Colors.white),
                       ),
                     ],
                   ),
@@ -591,24 +605,57 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ],
                       ),
                       const SizedBox(height: 15),
-                      ...moodHistory.map((entry) => Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "'${entry.description}'",
-                              style: TextStyle(
-                                color: Theme.of(context).textTheme.bodyLarge?.color,
+                      Container(
+                        height: 200,
+                        child: moodEntries.isEmpty
+                          ? Center(
+                              child: Text(
+                                "No mood entries yet",
+                                style: TextStyle(
+                                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                                ),
                               ),
+                            )
+                          : ListView.builder(
+                              padding: EdgeInsets.zero,
+                              itemCount: moodEntries.length,
+                              itemBuilder: (context, index) {
+                                final entry = moodEntries[index];
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 10),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              "'${entry.description}'",
+                                              style: TextStyle(
+                                                color: Theme.of(context).textTheme.bodyLarge?.color,
+                                              ),
+                                            ),
+                                            Text(
+                                              DateFormat('dd MMM, HH:mm').format(entry.timestamp),
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: Theme.of(context).textTheme.bodyMedium?.color,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Text(
+                                        entry.emoji ?? '😊',
+                                        style: const TextStyle(fontSize: 20),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
                             ),
-                            Text(
-                              entry.emoji ?? '😊',
-                              style: const TextStyle(fontSize: 20),
-                            ),
-                          ],
-                        ),
-                      )).toList(),
+                      ),
                     ],
                   ),
                 ),
@@ -692,13 +739,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     icon: Icons.mic,
                     label: "Voice",
                     onTap: () {
-                      Navigator.pop(context);
-                      // Show a message that voice input will be implemented soon
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Voice input coming soon!'),
-                        ),
-                      );
+                      _startVoiceInput();
                     },
                   ),
                 ],
@@ -754,6 +795,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   
   Future<void> _captureAndProcessImage() async {
     try {
+      final ImagePicker picker = ImagePicker();
+      
       // For handling image selection
       showDialog(
         context: context,
@@ -764,36 +807,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             TextButton(
               onPressed: () async {
                 Navigator.of(context).pop();
-                _showLoadingDialog(context, "Processing...");
                 
-                // In a real implementation, this would use image_picker
-                // For now, we'll simulate by directly showing the task input dialog
-                Navigator.of(context).pop(); // Close loading dialog
-                _showTaskInputDialog(context, "Sample OCR text from image");
-                
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Image picker package not installed. Using sample text.'),
-                  ),
-                );
+                final XFile? photo = await picker.pickImage(source: ImageSource.camera);
+                if (photo != null) {
+                  _processSelectedImage(File(photo.path));
+                }
               },
               child: const Text('Camera'),
             ),
             TextButton(
               onPressed: () async {
                 Navigator.of(context).pop();
-                _showLoadingDialog(context, "Processing...");
                 
-                // In a real implementation, this would use image_picker
-                // For now, we'll simulate by directly showing the task input dialog
-                Navigator.of(context).pop(); // Close loading dialog
-                _showTaskInputDialog(context, "Sample OCR text from gallery image");
-                
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Image picker package not installed. Using sample text.'),
-                  ),
-                );
+                final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                if (image != null) {
+                  _processSelectedImage(File(image.path));
+                }
               },
               child: const Text('Gallery'),
             ),
@@ -802,6 +831,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
     } catch (e) {
       _showErrorDialog("Error: $e");
+    }
+  }
+  
+  Future<void> _processSelectedImage(File imageFile) async {
+    try {
+      _showLoadingDialog(context, "Processing image...");
+      
+      // Send the image to the OCR API
+      final extractedText = await _sendImageToAPI(imageFile);
+      
+      // Close the loading dialog
+      Navigator.of(context).pop();
+      
+      // Show the task input dialog with the extracted text
+      _showTaskInputDialog(context, extractedText);
+    } catch (e) {
+      // Close the loading dialog if it's open
+      Navigator.of(context).pop();
+      _showErrorDialog("Error processing image: $e");
     }
   }
   
@@ -963,5 +1011,172 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         );
       },
     );
+  }
+
+  // Add speech to text functionality
+  final SpeechToText _speechToText = SpeechToText();
+  bool _isListening = false;
+  
+  Future<void> _startVoiceInput() async {
+    Navigator.pop(context);
+    _showVoiceInputDialog(context);
+  }
+  
+  void _showVoiceInputDialog(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    String recognizedText = '';
+    bool isListening = true;
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            backgroundColor: isDarkMode ? const Color(0xFF262626) : Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: const Text('Voice Input', textAlign: TextAlign.center),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 20),
+                Text(
+                  isListening ? 'Listening...' : 'Tap to speak',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                  ),
+                ),
+                const SizedBox(height: 30),
+                GestureDetector(
+                  onTap: () {
+                    if (isListening) {
+                      setState(() {
+                        isListening = false;
+                      });
+                      _stopListening();
+                    } else {
+                      setState(() {
+                        isListening = true;
+                      });
+                      _startListening((text) {
+                        setState(() {
+                          recognizedText = text;
+                        });
+                      });
+                    }
+                  },
+                  child: Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isListening ? AppTheme.primary : Colors.grey.shade300,
+                    ),
+                    child: Center(
+                      child: isListening
+                          ? _buildAudioWaveAnimation()
+                          : Icon(
+                              Icons.mic,
+                              color: Colors.white,
+                              size: 40,
+                            ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  recognizedText.isEmpty ? 'Say something...' : recognizedText,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  _stopListening();
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  _stopListening();
+                  Navigator.of(context).pop();
+                  if (recognizedText.isNotEmpty) {
+                    _showTaskInputDialog(context, recognizedText);
+                  }
+                },
+                child: const Text('Use Text'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+  
+  Widget _buildAudioWaveAnimation() {
+    return SizedBox(
+      width: 50,
+      height: 300,
+      child: Lottie.asset(
+        'assets/animations/audioSignal.json',
+        width: 50,
+        height: 200,
+        fit: BoxFit.contain,
+      ),
+    );
+  }
+  
+  Future<void> _startListening(Function(String) onResult) async {
+    _isListening = true;
+    
+    try {
+      final speech = SpeechToText();
+      bool available = await speech.initialize(
+        onStatus: (status) {
+          print('Speech status: $status');
+          if (status == 'done') {
+            _isListening = false;
+          }
+        },
+        onError: (error) {
+          print('Speech error: $error');
+          _isListening = false;
+        },
+      );
+      
+      if (available) {
+        speech.listen(
+          onResult: (result) {
+            final recognizedWords = result.recognizedWords;
+            onResult(recognizedWords);
+          },
+          listenFor: const Duration(seconds: 30),
+          pauseFor: const Duration(seconds: 5),
+          partialResults: true,
+          cancelOnError: true,
+          listenMode: ListenMode.confirmation,
+        );
+      } else {
+        print('Speech recognition not available');
+      }
+    } catch (e) {
+      print('Error starting speech recognition: $e');
+      _isListening = false;
+    }
+  }
+  
+  void _stopListening() {
+    _isListening = false;
+    SpeechToText().stop();
   }
 }

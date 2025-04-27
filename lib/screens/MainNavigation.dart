@@ -111,9 +111,9 @@ class _MainNavigationState extends State<MainNavigation> {
       ),
       PersistentBottomNavBarItem(
         icon: const CircleAvatar(
-          radius: 15,
-          backgroundImage: NetworkImage(
-            "https://placekitten.com/100/100", // Placeholder profile image
+          radius: 40,
+          backgroundImage: AssetImage(
+            "assets/images/avatarLogo.png", // Placeholder profile image
           ),
         ),
         title: 'Profile',
