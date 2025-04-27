@@ -13,9 +13,9 @@ class FontSizeNotifier extends StateNotifier<double> {
     state = newSize;
   }
 
-  double get small => state - 2;
-  double get medium => state;
-  double get large => state + 4;
+  double get small => 14.0;
+  double get medium => 16.0;
+  double get large => 20.0;
 }
 
 // Global provider
@@ -25,5 +25,13 @@ final fontSizeProvider = StateNotifierProvider<FontSizeNotifier, double>((ref) {
 
 // Selected font size provider
 final selectedFontProvider = StateProvider<FontSize>((ref) {
-  return FontSize.medium; // Default to medium
+  final fontSize = ref.watch(fontSizeProvider);
+  
+  if (fontSize <= 14.0) {
+    return FontSize.small;
+  } else if (fontSize >= 20.0) {
+    return FontSize.large;
+  } else {
+    return FontSize.medium;
+  }
 });

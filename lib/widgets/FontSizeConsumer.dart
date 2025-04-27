@@ -24,25 +24,34 @@ class FontSizeText extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedFontSize = ref.watch(selectedFontProvider);
-    final fontSizeNotifier = ref.watch(fontSizeProvider.notifier);
+    final fontSizeValue = ref.watch(fontSizeProvider);
     
     // Get the appropriate font size based on selection
     double fontSize;
     switch (selectedFontSize) {
       case FontSize.small:
-        fontSize = fontSizeNotifier.small;
+        fontSize = 14.0;
         break;
       case FontSize.medium:
-        fontSize = fontSizeNotifier.medium;
+        fontSize = 16.0;
         break;
       case FontSize.large:
-        fontSize = fontSizeNotifier.large;
+        fontSize = 20.0;
         break;
+    }
+    
+    // If style has fontSize and scaleFactor is true, adjust proportionally
+    final styleFontSize = style?.fontSize;
+    if (styleFontSize != null && scaleFactor) {
+      // Use a ratio to maintain proportional sizing
+      final baseSize = 16.0; // Medium size as the baseline
+      final ratio = fontSize / baseSize;
+      fontSize = styleFontSize * ratio;
     }
     
     // Apply the font size to the style
     final effectiveStyle = (style ?? const TextStyle()).copyWith(
-      fontSize: scaleFactor ? style?.fontSize ?? fontSize : fontSize,
+      fontSize: fontSize,
     );
     
     return Text(
@@ -59,18 +68,17 @@ class FontSizeText extends ConsumerWidget {
 extension FontSizeTextStyle on TextStyle {
   TextStyle withFontSize(BuildContext context, WidgetRef ref) {
     final selectedFontSize = ref.watch(selectedFontProvider);
-    final fontSizeNotifier = ref.watch(fontSizeProvider.notifier);
     
     double fontSize;
     switch (selectedFontSize) {
       case FontSize.small:
-        fontSize = fontSizeNotifier.small;
+        fontSize = 14.0;
         break;
       case FontSize.medium:
-        fontSize = fontSizeNotifier.medium;
+        fontSize = 16.0;
         break;
       case FontSize.large:
-        fontSize = fontSizeNotifier.large;
+        fontSize = 20.0;
         break;
     }
     

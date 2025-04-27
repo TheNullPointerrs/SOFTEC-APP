@@ -5,9 +5,11 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:softechapp/const/theme.dart';
 import 'package:softechapp/providers/profile_provider.dart';
 import 'package:softechapp/providers/task_provider.dart';
+import 'package:softechapp/providers/theme_provider.dart';
 import 'package:softechapp/services/auth.dart';
 import 'package:intl/intl.dart';
 import 'package:softechapp/providers/fontProvider.dart';
+import 'package:softechapp/widgets/FontSizeConsumer.dart';
 
 
 // Custom widget for contribution grid
@@ -445,7 +447,12 @@ class ProfileScreen extends ConsumerWidget {
 class CustomizationBottomSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final themeNotifier = ref.watch(themeProvider.notifier);
+    final currentTheme = ref.watch(themeProvider);
+    final isDarkMode = currentTheme == ThemeMode.dark || 
+                      (currentTheme == ThemeMode.system && 
+                       Theme.of(context).brightness == Brightness.dark);
+    
     final selectedFontSize = ref.watch(selectedFontProvider);
     
     return Container(
@@ -462,11 +469,12 @@ class CustomizationBottomSheet extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
-          const Text(
+          FontSizeText(
             'Customization',
             style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
           const SizedBox(height: 40),
@@ -475,7 +483,7 @@ class CustomizationBottomSheet extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              FontSizeText(
                 'Enable dark theme',
                 style: TextStyle(
                   fontSize: 24,
@@ -486,12 +494,7 @@ class CustomizationBottomSheet extends ConsumerWidget {
               Switch(
                 value: isDarkMode,
                 onChanged: (_) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Theme is controlled by your system settings'),
-                    ),
-                  );
+                  themeNotifier.toggleTheme();
                 },
                 activeColor: AppTheme.primary,
                 activeTrackColor: AppTheme.primary.withOpacity(0.5),
@@ -502,7 +505,7 @@ class CustomizationBottomSheet extends ConsumerWidget {
           const SizedBox(height: 40),
           
           // Font size selector
-          Text(
+          FontSizeText(
             'Adjust font size',
             style: TextStyle(
               fontSize: 24,
@@ -560,7 +563,7 @@ class CustomizationBottomSheet extends ConsumerWidget {
                   size: 28,
                 ),
                 const SizedBox(width: 12),
-                Text(
+                FontSizeText(
                   'Log Out',
                   style: TextStyle(
                     fontSize: 24,
@@ -605,13 +608,6 @@ class CustomizationBottomSheet extends ConsumerWidget {
             fontSizeNotifier.setFontSize(20.0);
             break;
         }
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Font size updated to ${size.name}'),
-            duration: const Duration(seconds: 1),
-          ),
-        );
       },
       child: Container(
         width: 70,
