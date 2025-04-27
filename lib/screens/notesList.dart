@@ -11,11 +11,12 @@ class NotesListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notesAsync = ref.watch(notesProvider);
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Your Notes'),
-        backgroundColor: Colors.blueAccent, // Modern background color
+        backgroundColor: colorScheme.primary, // Modern background color
         elevation: 5, // Add shadow to the app bar for better separation
       ),
       body: notesAsync.when(
@@ -30,6 +31,7 @@ class NotesListScreen extends ConsumerWidget {
               final formattedDate = dateFormat.format(note.createdAt);
 
               return Card(
+                color: colorScheme.surface, // Modern card color
                 margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12), // Rounded corners
@@ -76,7 +78,7 @@ class NotesListScreen extends ConsumerWidget {
             MaterialPageRoute(builder: (_) => const AddNoteScreen()),
           );
         },
-        backgroundColor: Colors.blueAccent, // Match with app bar color
+        backgroundColor: colorScheme.primary, // Match with app bar color
         child: const Icon(Icons.add, size: 30), // Bigger icon
       ),
     );
