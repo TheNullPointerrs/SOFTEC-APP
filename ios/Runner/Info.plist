@@ -73,5 +73,14 @@
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>This app uses speech recognition to convert your voice to text</string>
 
+	<!-- Allow HTTP connections for development -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+
 </dict>
 </plist>
