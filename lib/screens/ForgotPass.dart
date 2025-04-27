@@ -240,8 +240,8 @@ class _ForgotPassState extends ConsumerState<ForgotPass> {
               const SizedBox(height: 24),
               isLoading
                 ? SizedBox(
-                    width: 80,
-                    height: 40,
+                    width: 60, // Reduced from 80
+                    height: 30, // Reduced from 40
                     child: LoadingIndicator(
                       indicatorType: Indicator.ballPulse,
                       colors: [AppTheme.firstGradientColor],
