@@ -5,19 +5,38 @@ import 'package:softechapp/providers/task_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AddTaskScreen extends ConsumerStatefulWidget {
-  const AddTaskScreen({Key? key}) : super(key: key);
+  String? title;
+  AddTaskScreen({Key? key, this.title}) : super(key: key);
 
   @override
   _AddTaskScreenState createState() => _AddTaskScreenState();
 }
 
 class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
-  final TextEditingController titleController = TextEditingController();
+  late TextEditingController titleController;
   final TextEditingController descController = TextEditingController();
   DateTime dueDate = DateTime.now();
   String category = 'General';
   List<String> subtasks = []; // Store subtasks
   List<String> subtaskDescriptions = []; // Store subtask descriptions
+
+@override
+  void initState() {
+    super.initState();
+    // Initialize titleController in initState to access widget.title
+    titleController = TextEditingController(
+      text: widget.title != null && widget.title!.isNotEmpty ? widget.title : '',
+    );
+  }
+
+  @override
+  void dispose() {
+    // Dispose controllers to prevent memory leaks
+    titleController.dispose();
+    descController.dispose();
+    super.dispose();
+  }
+
 
   @override
   Widget build(BuildContext context) {
