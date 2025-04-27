@@ -7,8 +7,8 @@ import 'package:softechapp/models/UserModel.dart';
 import 'package:softechapp/providers/fontProvider.dart';
 import 'package:softechapp/providers/auth.dart';
 import 'package:softechapp/services/database_service.dart';
-import 'package:softechapp/widgets/developer_footer.dart';
 import 'package:loading_indicator/loading_indicator.dart';
+import 'package:softechapp/widegts/developer_footer.dart';
 import '../const/theme.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {

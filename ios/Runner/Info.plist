@@ -67,5 +67,11 @@
 		</dict>
 	</array>
 
+	<!-- Microphone and Speech Recognition permissions -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs access to your microphone for voice tasks</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>This app uses speech recognition to convert your voice to text</string>
+
 </dict>
 </plist>

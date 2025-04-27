@@ -6,6 +6,7 @@ import 'package:softechapp/firebase_options.dart';
 import 'package:softechapp/screens/ForgotPass.dart';
 import 'package:softechapp/screens/LoginScreen.dart';
 import 'package:softechapp/screens/MainNavigation.dart';
+import 'package:softechapp/screens/NotificationsScreen.dart';
 import 'package:softechapp/screens/Onboarding.dart';
 import 'package:softechapp/screens/SignUpScreen.dart';
 import 'package:softechapp/screens/SplashScreen.dart';
@@ -57,7 +58,10 @@ class MyApp extends ConsumerWidget {
             break;
           case '/mainNavigation':
             builder = (BuildContext _) => MainNavigation();
-            break;     
+            break; 
+          case '/notificationsScreen':
+            builder = (BuildContext _) => NotificationScreen();
+            break;       
 
           default:
             throw Exception('Invalid route: ${settings.name}');

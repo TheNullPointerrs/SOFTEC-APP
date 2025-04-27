@@ -26,6 +26,8 @@ class ActivityGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     return SizedBox(
       width: columns * (cellSize + spacing),
       height: rows * (cellSize + spacing),
@@ -55,7 +57,7 @@ class ActivityGrid extends StatelessWidget {
                       width: cellSize,
                       height: cellSize,
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade800,
+                        color: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade300,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),

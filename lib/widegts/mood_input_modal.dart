@@ -215,8 +215,8 @@ class _MoodInputModalState extends ConsumerState<MoodInputModal> {
                         },
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
-                          width: 46,
-                          height: 46,
+                          width: 40,
+                          height: 40,
                           decoration: BoxDecoration(
                             color: isSelected 
                                 ? option.color 
@@ -239,7 +239,7 @@ class _MoodInputModalState extends ConsumerState<MoodInputModal> {
                             child: Text(
                               option.emoji,
                               style: TextStyle(
-                                fontSize: 22,
+                                fontSize: 18,
                                 shadows: isSelected ? [
                                   Shadow(
                                     color: Colors.black.withOpacity(0.2),
