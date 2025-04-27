@@ -54,7 +54,10 @@ class MyApp extends ConsumerWidget {
             break;
           case '/forgotPass':
             builder = (BuildContext _) => ForgotPass();
-            break;  
+            break;
+          case '/mainNavigation':
+            builder = (BuildContext _) => MainNavigation();
+            break;     
 
           default:
             throw Exception('Invalid route: ${settings.name}');

@@ -3,10 +3,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:softechapp/models/UserModel.dart';
 import 'package:softechapp/providers/fontProvider.dart';
 import 'package:softechapp/providers/auth.dart';
-import 'package:softechapp/widegts/developer_footer.dart';
+import 'package:softechapp/services/database_service.dart';
 import 'package:loading_indicator/loading_indicator.dart';
+import 'package:softechapp/widegts/developer_footer.dart';
 import '../const/theme.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
@@ -17,6 +19,7 @@ class SignUpScreen extends ConsumerStatefulWidget {
 }
 
 class _SignUpScreenState extends ConsumerState<SignUpScreen> {
+  final nameController = TextEditingController(); // Add name controller
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
@@ -24,6 +27,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   String? errorMessage;
   Timer? _verificationTimer;
   
+  final FocusNode nameFocusNode = FocusNode(); // Add name focus node
   final FocusNode emailFocusNode = FocusNode();
   final FocusNode passwordFocusNode = FocusNode();
   final FocusNode confirmPasswordFocusNode = FocusNode();
@@ -34,6 +38,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   @override
   void initState() {
     super.initState();
+    nameFocusNode.addListener(() { // Add listener for name focus
+      setState(() {});
+    });
     emailFocusNode.addListener(() {
       setState(() {});
     });
@@ -64,9 +71,11 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   @override
   void dispose() {
+    nameController.dispose(); // Dispose name controller
     emailController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
+    nameFocusNode.dispose(); // Dispose name focus node
     emailFocusNode.dispose();
     passwordFocusNode.dispose();
     confirmPasswordFocusNode.dispose();
@@ -82,7 +91,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       return;
     }
     
-    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
+    // Check if name is empty
+    if (nameController.text.isEmpty || emailController.text.isEmpty || passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Please fill in all fields'))
       );
@@ -101,6 +111,19 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       );
       
       await userCredential.user!.sendEmailVerification();
+
+      final newUser = UserModel(
+        uid: FirebaseAuth.instance.currentUser!.uid,
+        name: nameController.text.trim(), // Use the entered name
+        email: emailController.text.trim(), // Use the entered email
+        moodStreak: 0,
+        preferences: {}, 
+        notificationsEnabled: false,
+        theme: 'light',
+        createdAt: DateTime.now().toIso8601String(),
+      );
+
+      await DatabaseService.addUser(newUser);
       
       if (!mounted) return;
       _showVerificationModal(userCredential.user!);
@@ -215,8 +238,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             Column(
               children: [
                 SizedBox(
-                  width: 60,
-                  height: 30,
+                  width: 50, // Reduced from 60
+                  height: 25, // Reduced from 30
                   child: LoadingIndicator(
                     indicatorType: Indicator.ballPulse,
                     colors: [AppTheme.firstGradientColor],
@@ -382,6 +405,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     
     return Scaffold(
       backgroundColor: backgroundColor,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: primaryTextColor),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -433,6 +464,51 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   ),
                   
                 const SizedBox(height: 40),
+                
+                // Name field
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Full Name',
+                      style: TextStyle(
+                        color: primaryTextColor,
+                        fontSize: currentFontSize,
+                        fontWeight: nameFocusNode.hasFocus ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: textFieldColor,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: nameFocusNode.hasFocus ? highlightedBorderColor : regularBorderColor,
+                          width: nameFocusNode.hasFocus ? 2 : 1,
+                        ),
+                      ),
+                      child: TextField(
+                        controller: nameController,
+                        focusNode: nameFocusNode,
+                        keyboardType: TextInputType.name,
+                        textCapitalization: TextCapitalization.words, // Capitalize each word
+                        decoration: InputDecoration(
+                          hintText: 'Enter your name',
+                          hintStyle: TextStyle(color: Colors.grey),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        ),
+                        style: TextStyle(
+                          color: primaryTextColor,
+                          fontSize: currentFontSize,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 16),
+                
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -568,8 +644,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 const SizedBox(height: 24),
                 isLoading
                   ? SizedBox(
-                      width: 80,
-                      height: 40,
+                      width: 80, // Reduced from 80
+                      height: 40, // Reduced from 40
                       child: LoadingIndicator(
                         indicatorType: Indicator.ballPulse,
                         colors: [AppTheme.firstGradientColor],
