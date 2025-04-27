@@ -20,6 +20,7 @@ dependencies:
   lottie: ^3.3.1 
   loading_indicator: ^3.1.1
   persistent_bottom_nav_bar: ^6.2.1
+  permission_handler:
   phosphor_flutter: 
   fl_chart: ^0.68.0
   intl: ^0.18.1
@@ -32,7 +33,6 @@ dependencies:
   firebase_storage: 
   flutter_tts:
   path_provider:
-  permission_handler:
   flutter_local_notifications:
   timezone:
 

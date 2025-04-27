@@ -1,4 +1,3 @@
-// ignore_for_file: invalid_use_of_protected_member
 
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -9,8 +8,11 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:softechapp/models/task.dart';
 import 'package:softechapp/screens/Addtask.dart';
+import 'package:softechapp/screens/TaskScreen.dart';
+import 'package:softechapp/screens/quicktask.dart';
 import 'package:softechapp/widegts/mood_input_modal.dart';
 import 'package:softechapp/screens/NotificationsScreen.dart';
 import 'package:lottie/lottie.dart';
@@ -155,9 +157,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ],
                       ),
                       GestureDetector(
-                        onTap: (){
-                          // Navigator.of(context).pushNamed('/notificationsScreen');
-
+                        onTap: () {
                           Navigator.push(context, MaterialPageRoute(builder: (context) => NotificationScreen()));
                         },
                         child: Container(
@@ -200,6 +200,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       return GestureDetector(
                         onTap: () {
                           ref.read(selectedDateProvider.notifier).state = date;
+                          // Navigate to TaskScreen with the selected date
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => TaskScreen(filterDate: date),
+                            ),
+                          );
                         },
                         child: Container(
                           width: 60,
@@ -315,8 +322,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                     GestureDetector(
                       onTap: () {
-                        // Navigate to task screen
-                        DefaultTabController.of(context)?.animateTo(1);
+                        // Navigate to task screen without date filter
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const TaskScreen(),
+                          ),
+                        );
                       },
                       child: Text(
                         "See all",
@@ -578,7 +590,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
                 
-                
                 const SizedBox(height: 20),
                 
                 // Mood History
@@ -679,88 +690,97 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  void _showAddTaskOptions(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: isDarkMode ? const Color(0xFF262626) : Colors.white,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
+void _showAddTaskOptions(BuildContext context) {
+  final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (context) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isDarkMode ? const Color(0xFF262626) : Colors.white,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 10,
+              spreadRadius: 0,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 10,
-                spreadRadius: 0,
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 5,
+              decoration: BoxDecoration(
+                color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(10),
               ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(10),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              "Add Your Task",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
+            ),
+            const SizedBox(height: 30),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildOptionButton(
+                  context: context,
+                  icon: Icons.camera_alt,
+                  label: "OCR",
+                  onTap: () {
+                    Navigator.pop(context);
+                    _captureAndProcessImage();
+                  },
                 ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                "Add Your Task",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                _buildOptionButton(
+                  context: context,
+                  icon: Icons.text_fields,
+                  label: "Text",
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => AddTaskScreen()));
+                  },
                 ),
-              ),
-              const SizedBox(height: 30),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildOptionButton(
-                    context: context,
-                    icon: Icons.camera_alt,
-                    label: "OCR",
-                    onTap: () {
-                      Navigator.pop(context);
-                      _captureAndProcessImage();
-                    },
-                  ),
-                  _buildOptionButton(
-                    context: context,
-                    icon: Icons.text_fields,
-                    label: "Text",
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => AddTaskScreen()));
-                    },
-                  ),
-                  _buildOptionButton(
-                    context: context,
-                    icon: Icons.mic,
-                    label: "Voice",
-                    onTap: () {
-                      _startVoiceInput();
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 30),
-            ],
-          ),
-        );
-      },
-    );
-  }
+                _buildOptionButton(
+                  context: context,
+                  icon: Icons.mic,
+                  label: "Voice",
+                  onTap: () {
+                    _startVoiceInput();
+                  },
+                ),
+                _buildOptionButton(
+                  context: context,
+                  icon: Icons.bolt,
+                  label: "Quick Task",
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => QuickTaskScreen()));
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 30),
+          ],
+        ),
+      );
+    },
+  );
+}
   
   Widget _buildOptionButton({
     required BuildContext context,
@@ -974,170 +994,272 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // Add speech to text functionality
-  final SpeechToText _speechToText = SpeechToText();
-  bool _isListening = false;
-  
-  Future<void> _startVoiceInput() async {
-    Navigator.pop(context);
-    _showVoiceInputDialog(context);
+
+// ... (other imports remain the same)
+
+// Inside _HomeScreenState class
+
+// Add speech to text functionality
+final SpeechToText _speechToText = SpeechToText();
+bool _isListening = false;
+
+Future<void> _startVoiceInput() async {
+  // Request microphone permission
+  final permissionStatus = await Permission.microphone.request();
+  if (permissionStatus.isDenied || permissionStatus.isPermanentlyDenied) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Microphone permission is required for voice input.'),
+        action: SnackBarAction(
+          label: 'Settings',
+          onPressed: () => openAppSettings(),
+        ),
+      ),
+    );
+    return;
   }
-  
-  void _showVoiceInputDialog(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    String recognizedText = '';
-    bool isListening = true;
-    
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            backgroundColor: isDarkMode ? const Color(0xFF262626) : Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            title: const Text('Voice Input', textAlign: TextAlign.center),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 20),
-                Text(
-                  isListening ? 'Listening...' : 'Tap to speak',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Theme.of(context).textTheme.bodyMedium?.color,
-                  ),
+
+  Navigator.pop(context); // Close the bottom sheet
+  _showVoiceInputDialog(context);
+}
+
+void _showVoiceInputDialog(BuildContext context) {
+  final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+  String recognizedText = '';
+  String statusMessage = 'Tap to speak and say your task clearly';
+  bool isListening = false;
+  int retryCount = 0;
+  const maxRetries = 2;
+
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (dialogContext, setState) {
+        return AlertDialog(
+          backgroundColor: isDarkMode ? const Color(0xFF262626) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text('Voice Input', textAlign: TextAlign.center),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 20),
+              Text(
+                statusMessage,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
                 ),
-                const SizedBox(height: 30),
-                GestureDetector(
-                  onTap: () {
-                    if (isListening) {
-                      setState(() {
-                        isListening = false;
-                      });
-                      _stopListening();
-                    } else {
-                      setState(() {
-                        isListening = true;
-                      });
-                      _startListening((text) {
+              ),
+              const SizedBox(height: 30),
+              GestureDetector(
+                onTap: () async {
+                  if (isListening) {
+                    setState(() {
+                      isListening = false;
+                      statusMessage = 'Tap to speak and say your task clearly';
+                    });
+                    _stopListening();
+                  } else {
+                    setState(() {
+                      isListening = true;
+                      statusMessage = 'Listening... Speak clearly';
+                      retryCount = 0; // Reset retries when manually starting
+                    });
+                    await _startListening(
+                      onResult: (text) {
                         setState(() {
                           recognizedText = text;
                         });
-                      });
-                    }
-                  },
-                  child: Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isListening ? AppTheme.primary : Colors.grey.shade300,
-                    ),
-                    child: Center(
-                      child: isListening
-                          ? _buildAudioWaveAnimation()
-                          : Icon(
-                              Icons.mic,
-                              color: Colors.white,
-                              size: 40,
-                            ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  recognizedText.isEmpty ? 'Say something...' : recognizedText,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Theme.of(context).textTheme.bodyLarge?.color,
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  _stopListening();
-                  Navigator.of(context).pop();
-                },
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  _stopListening();
-                  Navigator.of(context).pop();
-                  if (recognizedText.isNotEmpty) {
-                    _showTaskInputDialog(context, recognizedText);
+                      },
+                      onError: (error) {
+                        setState(() {
+                          isListening = false;
+                          if (error.contains('error_no_match') && retryCount < maxRetries) {
+                            retryCount++;
+                            statusMessage = 'No speech detected. Retrying ($retryCount/$maxRetries)...';
+                            // Retry listening
+                            Future.delayed(const Duration(milliseconds: 500), () {
+                              if (isListening) return;
+                              setState(() {
+                                isListening = true;
+                                statusMessage = 'Listening... Speak clearly';
+                              });
+                              _startListening(
+                                onResult: (text) {
+                                  setState(() {
+                                    recognizedText = text;
+                                  });
+                                },
+                                onError: (error) {
+                                  setState(() {
+                                    isListening = false;
+                                    statusMessage = 'Error: $error';
+                                  });
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Speech error: $error')),
+                                  );
+                                },
+                                onStatus: (status) {
+                                  if (status == 'done' || status == 'notListening') {
+                                    setState(() {
+                                      isListening = false;
+                                      statusMessage = 'Tap to speak and say your task clearly';
+                                    });
+                                  }
+                                },
+                              );
+                            });
+                          } else {
+                            statusMessage = 'Error: $error';
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Speech error: $error')),
+                            );
+                          }
+                        });
+                      },
+                      onStatus: (status) {
+                        print('Speech status: $status');
+                        if (status == 'done' || status == 'notListening') {
+                          setState(() {
+                            isListening = false;
+                            statusMessage = 'Tap to speak and say your task clearly';
+                          });
+                        }
+                      },
+                    );
                   }
                 },
-                child: const Text('Use Text'),
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isListening ? AppTheme.primary : Colors.grey.shade300,
+                  ),
+                  child: Center(
+                    child: isListening
+                        ? _buildAudioWaveAnimation()
+                        : Icon(
+                            Icons.mic,
+                            color: Colors.white,
+                            size: 40,
+                          ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                recognizedText.isEmpty ? 'Say something like "Buy groceries tomorrow"' : recognizedText,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                ),
               ),
             ],
-          );
-        },
-      ),
-    );
-  }
-  
-  Widget _buildAudioWaveAnimation() {
-    return SizedBox(
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                _stopListening();
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                _stopListening();
+                Navigator.of(dialogContext).pop();
+                if (recognizedText.isNotEmpty) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AddTaskScreen(
+                        title: recognizedText,
+                      ),
+                    ),
+                  );
+                }
+              },
+              child: const Text('Use Text'),
+            ),
+          ],
+        );
+      },
+    ),
+  );
+}
+
+Widget _buildAudioWaveAnimation() {
+  return SizedBox(
+    width: 50,
+    height: 50,
+    child: Lottie.asset(
+      'assets/animations/audioSignal.json',
       width: 50,
-      height: 300,
-      child: Lottie.asset(
-        'assets/animations/audioSignal.json',
-        width: 50,
-        height: 200,
-        fit: BoxFit.contain,
-      ),
+      height: 50,
+      fit: BoxFit.contain,
+    ),
+  );
+}
+
+Future<void> _startListening({
+  required Function(String) onResult,
+  required Function(String) onError,
+  required Function(String) onStatus,
+}) async {
+  if (_isListening) return;
+
+  _isListening = true;
+
+  try {
+    bool available = await _speechToText.initialize(
+      onStatus: (status) {
+        print('Speech status: $status');
+        onStatus(status);
+      },
+      onError: (error) {
+        print('Speech error: $error');
+        _isListening = false;
+        onError(error.toString());
+      },
     );
-  }
-  
-  Future<void> _startListening(Function(String) onResult) async {
-    _isListening = true;
-    
-    try {
-      final speech = SpeechToText();
-      bool available = await speech.initialize(
-        onStatus: (status) {
-          print('Speech status: $status');
-          if (status == 'done') {
-            _isListening = false;
+
+    if (available) {
+      await _speechToText.listen(
+        onResult: (result) {
+          print('Recognized words: ${result.recognizedWords}');
+          if (result.recognizedWords.isNotEmpty) {
+            onResult(result.recognizedWords);
           }
         },
-        onError: (error) {
-          print('Speech error: $error');
-          _isListening = false;
-        },
+        listenFor: const Duration(seconds: 60), // Extended duration
+        pauseFor: const Duration(seconds: 10), // Allow longer pauses
+        partialResults: true,
+        cancelOnError: false, // Don't cancel on error to allow retries
+        listenMode: ListenMode.dictation, // Better for free-form input
+        localeId: 'en-US', // Explicitly set to English (US)
       );
-      
-      if (available) {
-        speech.listen(
-          onResult: (result) {
-            final recognizedWords = result.recognizedWords;
-            onResult(recognizedWords);
-          },
-          listenFor: const Duration(seconds: 30),
-          pauseFor: const Duration(seconds: 5),
-          partialResults: true,
-          cancelOnError: true,
-          listenMode: ListenMode.confirmation,
-        );
-      } else {
-        print('Speech recognition not available');
-      }
-    } catch (e) {
-      print('Error starting speech recognition: $e');
+    } else {
       _isListening = false;
+      onError('Speech recognition not available on this device');
     }
-  }
-  
-  void _stopListening() {
+  } catch (e) {
+    print('Error starting speech recognition: $e');
     _isListening = false;
-    SpeechToText().stop();
+    onError('Failed to start speech recognition: $e');
   }
+}
+
+void _stopListening() {
+  if (_isListening) {
+    _speechToText.stop();
+    _isListening = false;
+  }
+}
 }

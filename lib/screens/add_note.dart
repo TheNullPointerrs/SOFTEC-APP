@@ -10,7 +10,7 @@ class AddNoteScreen extends ConsumerStatefulWidget {
 }
 
 class _AddNoteScreenState extends ConsumerState<AddNoteScreen> {
-  final TextEditingController _controller = TextEditingController(text:"The quick brown fox jumps over the lazy dog. This sentence is commonly used to test typing skills and font rendering. It includes every letter of the English alphabet, making it useful for various tasks." );
+  final TextEditingController _controller = TextEditingController(text:"Flutter is an open-source UI software development kit created by Google. It is used to develop cross-platform applications for Android, iOS, Linux, macOS, Windows, and the web from a single codebase. Flutter apps are built using the Dart programming language and provide a rich, native-like user experience." );
   bool _canSummarize = false;
   bool _isSummarizing = false;
   final NotesService _notesService = NotesService(); // initialize service
