@@ -30,6 +30,11 @@ dependencies:
   speech_to_text: 
   flutter_launcher_icons: ^0.14.3
   firebase_storage: 
+  flutter_tts:
+  path_provider:
+  permission_handler:
+  flutter_local_notifications:
+  timezone:
 
 
 dev_dependencies:

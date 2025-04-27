@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../const/theme.dart';
 import 'package:intl/intl.dart';
+import 'package:softechapp/providers/task_provider.dart';
+import 'package:softechapp/models/task.dart';
 
 // Notification Models
 class TaskReminderNotification {
@@ -16,6 +18,16 @@ class TaskReminderNotification {
     required this.deadline,
     this.isCompleted = false,
   });
+  
+  // Factory constructor to create from Task model
+  factory TaskReminderNotification.fromTask(Task task) {
+    return TaskReminderNotification(
+      id: task.id,
+      taskName: task.title,
+      deadline: task.dueDate,
+      isCompleted: task.isCompleted,
+    );
+  }
 }
 
 class MissedTaskNotification {
@@ -28,6 +40,15 @@ class MissedTaskNotification {
     required this.taskName,
     required this.missedDeadline,
   });
+  
+  // Factory constructor to create from Task model
+  factory MissedTaskNotification.fromTask(Task task) {
+    return MissedTaskNotification(
+      id: task.id,
+      taskName: task.title,
+      missedDeadline: task.dueDate,
+    );
+  }
 }
 
 class UpdateNotification {
@@ -44,28 +65,7 @@ class UpdateNotification {
   });
 }
 
-// Sample Data Providers
-final taskReminderProvider = StateProvider<List<TaskReminderNotification>>((ref) => [
-  TaskReminderNotification(
-    id: '1',
-    taskName: 'Complete Project Report',
-    deadline: DateTime.now().add(const Duration(days: 2)),
-  ),
-  TaskReminderNotification(
-    id: '2',
-    taskName: 'Team Meeting Preparation',
-    deadline: DateTime.now().add(const Duration(days: 1)),
-  ),
-]);
-
-final missedTaskProvider = StateProvider<List<MissedTaskNotification>>((ref) => [
-  MissedTaskNotification(
-    id: '1',
-    taskName: 'Submit Assignment',
-    missedDeadline: DateTime.now().subtract(const Duration(days: 1)),
-  ),
-]);
-
+// Make a provider for update notifications (non-task related)
 final updateNotificationProvider = StateProvider<List<UpdateNotification>>((ref) => [
   UpdateNotification(
     id: '1',
@@ -87,9 +87,34 @@ class NotificationScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     
-    // Read data from providers
-    final taskReminders = ref.watch(taskReminderProvider);
-    final missedTasks = ref.watch(missedTaskProvider);
+    // Get all tasks from the task provider
+    final allTasks = ref.watch(taskProvider);
+    
+    // Current date for comparison
+    final now = DateTime.now();
+    
+    // Filter tasks into upcoming (reminders) and missed
+    final upcomingTasks = allTasks.where((task) => 
+        !task.isCompleted && 
+        task.dueDate.isAfter(now) &&
+        task.dueDate.difference(now).inDays <= 7 // Show tasks due within next 7 days
+    ).toList();
+    
+    final missedTasks = allTasks.where((task) => 
+        !task.isCompleted && 
+        task.dueDate.isBefore(now)
+    ).toList();
+    
+    // Convert tasks to notification models
+    final taskReminders = upcomingTasks
+        .map((task) => TaskReminderNotification.fromTask(task))
+        .toList();
+    
+    final missedTaskNotifications = missedTasks
+        .map((task) => MissedTaskNotification.fromTask(task))
+        .toList();
+    
+    // Get update notifications
     final updates = ref.watch(updateNotificationProvider);
     
     return Scaffold(
@@ -130,7 +155,7 @@ class NotificationScreen extends ConsumerWidget {
                 children: [
                   // Reminders
                   Text(
-                    'Reminders',
+                    'Upcoming Tasks',
                     style: TextStyle(
                       color: Theme.of(context).textTheme.bodyLarge?.color,
                       fontSize: 18,
@@ -144,7 +169,7 @@ class NotificationScreen extends ConsumerWidget {
                     _buildEmptyState('No upcoming task reminders'),
                   ...taskReminders.map((reminder) => Padding(
                     padding: const EdgeInsets.only(bottom: 10),
-                    child: _buildTaskReminder(context, reminder),
+                    child: _buildTaskReminder(context, reminder, ref),
                   )),
                   
                   const SizedBox(height: 30),
@@ -161,11 +186,11 @@ class NotificationScreen extends ConsumerWidget {
                   const SizedBox(height: 16),
                   
                   // Missed Tasks List
-                  if (missedTasks.isEmpty)
+                  if (missedTaskNotifications.isEmpty)
                     _buildEmptyState('No missed tasks'),
-                  ...missedTasks.map((task) => Padding(
+                  ...missedTaskNotifications.map((task) => Padding(
                     padding: const EdgeInsets.only(bottom: 10),
-                    child: _buildMissedTask(context, task),
+                    child: _buildMissedTask(context, task, ref),
                   )),
                   
                   const SizedBox(height: 30),
@@ -212,7 +237,7 @@ class NotificationScreen extends ConsumerWidget {
     );
   }
   
-  Widget _buildTaskReminder(BuildContext context, TaskReminderNotification notification) {
+  Widget _buildTaskReminder(BuildContext context, TaskReminderNotification notification, WidgetRef ref) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final formatter = DateFormat('dd-MM-yyyy');
     
@@ -268,17 +293,23 @@ class NotificationScreen extends ConsumerWidget {
                 ],
               ),
             ),
-            Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF4CAF50), // Green button color
-                borderRadius: BorderRadius.circular(8),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: const Text(
-                'Done',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
+            GestureDetector(
+              onTap: () {
+                // Mark task as completed
+                ref.read(taskProvider.notifier).toggleTaskCompletion(notification.id);
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: notification.isCompleted ? Colors.grey : const Color(0xFF4CAF50),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Text(
+                  notification.isCompleted ? 'Completed' : 'Done',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ),
@@ -288,40 +319,70 @@ class NotificationScreen extends ConsumerWidget {
     );
   }
   
-  Widget _buildMissedTask(BuildContext context, MissedTaskNotification notification) {
+  Widget _buildMissedTask(BuildContext context, MissedTaskNotification notification, WidgetRef ref) {
     final formatter = DateFormat('dd-MM-yyyy');
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      decoration: BoxDecoration(
+        color: isDarkMode ? Colors.red.shade900.withOpacity(0.6) : Colors.red.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.red.shade200),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Row(
         children: [
-          Text(
-            notification.taskName,
-            style: TextStyle(
-              color: Theme.of(context).textTheme.bodyLarge?.color,
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  notification.taskName,
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Missed deadline: ${formatter.format(notification.missedDeadline)}',
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 4),
           Row(
             children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: Colors.red,
-                  shape: BoxShape.circle,
-                ),
+              IconButton(
+                icon: const Icon(Icons.calendar_today, color: Colors.red),
+                onPressed: () {
+                  // Reschedule task functionality could be added here
+                },
               ),
-              const SizedBox(width: 6),
-              Text(
-                'Missed deadline: ${formatter.format(notification.missedDeadline)}',
-                style: TextStyle(
-                  color: Theme.of(context).textTheme.bodyMedium?.color,
-                  fontSize: 12,
-                ),
+              IconButton(
+                icon: Icon(Icons.check_circle_outline, 
+                  color: isDarkMode ? Colors.white70 : Colors.black54),
+                onPressed: () {
+                  // Mark the task as done
+                  ref.read(taskProvider.notifier).toggleTaskCompletion(notification.id);
+                },
               ),
             ],
           ),
@@ -336,7 +397,7 @@ class NotificationScreen extends ConsumerWidget {
     
     return Container(
       decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF333333) : Colors.grey.shade200, // Dark gray for notification
+        color: isDarkMode ? const Color(0xFF333333) : Colors.grey.shade200,
         borderRadius: BorderRadius.circular(12),
       ),
       padding: const EdgeInsets.all(16),
