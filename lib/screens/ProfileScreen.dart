@@ -97,11 +97,30 @@ class ProfileScreen extends ConsumerWidget {
     final int totalTasks = tasksList.length;
     final int completedTasks = tasksList.where((task) => task.isCompleted).length;
 
-    final workloadData = {
-      "Work": 20,
-      "Study": 15,
-      "Fitness": 65,
-    };
+    // final workloadData = {
+    //   "Work": 20,
+    //   "Study": 15,
+    //   "Fitness": 65,
+    // };
+    
+  // Generate workload data dynamically
+  final Map<String, int> workloadData = {};
+
+  // Loop through tasks and categorize them
+  for (var task in tasksList) {
+    if (task.category != null) {
+      workloadData.update(task.category, (value) => value + 1, ifAbsent: () => 1);
+    }
+  }
+
+  // Optionally, you can set default values or handle empty categories
+  if (workloadData.isEmpty) {
+    workloadData.addAll({
+      "Work": 0,
+      "Study": 0,
+      "General": 0,
+    });
+  }
 
     return userProfileAsyncValue.when(
       data: (user) {
@@ -249,7 +268,7 @@ class ProfileScreen extends ConsumerWidget {
                                     showTitle: false,
                                   ),
                                   PieChartSectionData(
-                                    value: (workloadData["Fitness"] ?? 0).toDouble(),
+                                    value: (workloadData["General"] ?? 0).toDouble(),
                                     color: Colors.amber,
                                     radius: 50,
                                     showTitle: false,
@@ -282,7 +301,7 @@ class ProfileScreen extends ConsumerWidget {
                                 const SizedBox(height: 10),
                                 _buildLegendItem(Colors.green, "Study"),
                                 const SizedBox(height: 10),
-                                _buildLegendItem(Colors.amber, "Fitness"),
+                                _buildLegendItem(Colors.amber, "General"),
                               ],
                             ),
                           ),
