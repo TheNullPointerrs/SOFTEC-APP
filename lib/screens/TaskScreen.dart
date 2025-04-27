@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:softechapp/models/task.dart';
 import 'package:softechapp/providers/task_provider.dart';
+import 'package:softechapp/screens/Addtask.dart';
 import '../const/theme.dart';
 
 class TaskScreen extends ConsumerStatefulWidget {
@@ -91,13 +92,16 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
           ),
         ),
       ),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () {
-      //     _showAddTaskDialog(context);
-      //   },
-      //   backgroundColor: AppTheme.primary,
-      //   child: const Icon(Icons.add),
-      // ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddTaskScreen()),
+          );
+        },
+        backgroundColor: AppTheme.primary,
+        child: const Icon(Icons.add),
+      ),
     );
   }
 

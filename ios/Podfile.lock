@@ -1264,6 +1264,8 @@ PODS:
     - nanopb (~> 3.30910.0)
   - FirebaseSharedSwift (11.12.0)
   - Flutter (1.0.0)
+  - flutter_local_notifications (0.0.1):
+    - Flutter
   - flutter_tts (0.0.1):
     - Flutter
   - google_sign_in_ios (0.0.1):
@@ -1427,6 +1429,7 @@ DEPENDENCIES:
   - firebase_auth (from `.symlinks/plugins/firebase_auth/ios`)
   - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
   - Flutter (from `Flutter`)
+  - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
   - flutter_tts (from `.symlinks/plugins/flutter_tts/ios`)
   - google_sign_in_ios (from `.symlinks/plugins/google_sign_in_ios/darwin`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
@@ -1471,6 +1474,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/firebase_core/ios"
   Flutter:
     :path: Flutter
+  flutter_local_notifications:
+    :path: ".symlinks/plugins/flutter_local_notifications/ios"
   flutter_tts:
     :path: ".symlinks/plugins/flutter_tts/ios"
   google_sign_in_ios:
@@ -1503,6 +1508,7 @@ SPEC CHECKSUMS:
   FirebaseFirestoreInternal: 97a2bb5f16951c77753c860d3519379702ab6f8a
   FirebaseSharedSwift: d2475748a2d2a36242ed13baa34b2acda846c925
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
+  flutter_local_notifications: a5a732f069baa862e728d839dd2ebb904737effb
   flutter_tts: b88dbc8655d3dc961bc4a796e4e16a4cc1795833
   google_sign_in_ios: b48bb9af78576358a168361173155596c845f0b9
   GoogleSignIn: ce8c89bb9b37fb624b92e7514cc67335d1e277e4

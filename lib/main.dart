@@ -10,6 +10,7 @@ import 'package:softechapp/screens/NotificationsScreen.dart';
 import 'package:softechapp/screens/Onboarding.dart';
 import 'package:softechapp/screens/SignUpScreen.dart';
 import 'package:softechapp/screens/SplashScreen.dart';
+import 'package:softechapp/services/local_notifications.dart';
 import 'const/theme.dart';
 
 Future<void> main() async {
@@ -18,9 +19,12 @@ Future<void> main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    
+    await LocalNotifications.localNotiInit();
+    
     runApp(const ProviderScope(child: MyApp()));
   } catch (e) {
-    print('Error initializing Firebase: $e');
+    print('Error initializing app: $e');
   }
 }
 
@@ -35,6 +39,7 @@ class MyApp extends ConsumerWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
       initialRoute: '/',
+      navigatorKey: notificationsNavigatorKey,
       onGenerateRoute: (settings) {
         WidgetBuilder builder;
         switch (settings.name) {

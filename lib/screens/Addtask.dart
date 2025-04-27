@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:softechapp/models/task.dart';
 import 'package:softechapp/providers/task_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:softechapp/services/local_notifications.dart';
 
 class AddTaskScreen extends ConsumerStatefulWidget {
   const AddTaskScreen({Key? key}) : super(key: key);
@@ -173,6 +174,18 @@ void _saveTask() async {
 
     // Add the main task first, then subtasks
     ref.read(taskProvider.notifier).addTask(mainTask);
+    
+    // Schedule notification 12 hours before the due date
+    DateTime notificationTime = dueDate.subtract(const Duration(hours: 12));
+    // Only schedule if notification time is in the future
+    if (notificationTime.isAfter(DateTime.now())) {
+      await LocalNotifications.showScheduleNotification(
+        title: 'Task Reminder',
+        body: 'Your task "$title" is due in 12 hours',
+        payload: mainTask.id,
+        scheduledTime: notificationTime,
+      );
+    }
 
     // Add subtasks
     for (int i = 0; i < subtasks.length; i++) {
