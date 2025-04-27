@@ -1,4 +1,3 @@
-// ignore_for_file: invalid_use_of_protected_member
 
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -11,6 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:softechapp/models/task.dart';
 import 'package:softechapp/screens/Addtask.dart';
+import 'package:softechapp/screens/TaskScreen.dart';
 import 'package:softechapp/widegts/mood_input_modal.dart';
 import 'package:softechapp/screens/NotificationsScreen.dart';
 import 'package:lottie/lottie.dart';
@@ -147,9 +147,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ],
                       ),
                       GestureDetector(
-                        onTap: (){
-                          // Navigator.of(context).pushNamed('/notificationsScreen');
-
+                        onTap: () {
                           Navigator.push(context, MaterialPageRoute(builder: (context) => NotificationScreen()));
                         },
                         child: Container(
@@ -192,6 +190,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       return GestureDetector(
                         onTap: () {
                           ref.read(selectedDateProvider.notifier).state = date;
+                          // Navigate to TaskScreen with the selected date
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => TaskScreen(filterDate: date),
+                            ),
+                          );
                         },
                         child: Container(
                           width: 60,
@@ -307,8 +312,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                     GestureDetector(
                       onTap: () {
-                        // Navigate to task screen
-                        DefaultTabController.of(context)?.animateTo(1);
+                        // Navigate to task screen without date filter
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const TaskScreen(),
+                          ),
+                        );
                       },
                       child: Text(
                         "See all",
@@ -569,7 +579,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ),
                 ),
-                
                 
                 const SizedBox(height: 20),
                 

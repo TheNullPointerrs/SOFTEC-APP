@@ -15,26 +15,18 @@ class TaskScreen extends ConsumerStatefulWidget {
 }
 
 class _TaskScreenState extends ConsumerState<TaskScreen> {
-  bool _showCompleted = true;
+  String _selectedFilter = 'All'; // Track the selected filter
 
   @override
   void initState() {
     super.initState();
-    // Fetch tasks when the screen is initialized
     ref.read(taskProvider.notifier).fetchTasks();
   }
 
   @override
   Widget build(BuildContext context) {
     final tasks = ref.watch(taskProvider);
-    final displayTasks = widget.filterDate != null
-        ? tasks.where((task) =>
-            task.dueDate.year == widget.filterDate!.year &&
-            task.dueDate.month == widget.filterDate!.month &&
-            task.dueDate.day == widget.filterDate!.day).toList()
-        : _showCompleted
-            ? tasks
-            : tasks.where((task) => !task.isCompleted).toList();
+    final displayTasks = _filterTasks(tasks);
 
     return Scaffold(
       body: SafeArea(
@@ -54,7 +46,6 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                   ),
-
                 ],
               ),
               const SizedBox(height: 20),
@@ -64,9 +55,9 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                   child: Row(
                     children: [
                       _buildFilterChip('All'),
-                      _buildFilterChip('Today'),
-                      _buildFilterChip('Upcoming'),
-                      _buildFilterChip('Priority'),
+                      _buildFilterChip('Completed'),
+                      _buildFilterChip('In Progress'),
+                      _buildFilterChip('Todo'),
                     ],
                   ),
                 ),
@@ -91,29 +82,60 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
           ),
         ),
       ),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () {
-      //     _showAddTaskDialog(context);
-      //   },
-      //   backgroundColor: AppTheme.primary,
-      //   child: const Icon(Icons.add),
-      // ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _showAddTaskDialog(context);
+        },
+        backgroundColor: AppTheme.primary,
+        child: const Icon(Icons.add),
+      ),
     );
   }
 
+  List<Task> _filterTasks(List<Task> tasks) {
+    // Step 1: Apply date filter if filterDate is provided
+    List<Task> filteredTasks = tasks;
+    if (widget.filterDate != null) {
+      filteredTasks = tasks.where((task) =>
+          task.dueDate.year == widget.filterDate!.year &&
+          task.dueDate.month == widget.filterDate!.month &&
+          task.dueDate.day == widget.filterDate!.day).toList();
+    }
+
+    // Step 2: Apply status filter based on _selectedFilter
+    switch (_selectedFilter) {
+      case 'Completed':
+        return filteredTasks.where((task) => task.isCompleted).toList();
+      case 'In Progress':
+        return filteredTasks
+            .where((task) => !task.isCompleted && task.dueDate.isBefore(DateTime.now()))
+            .toList();
+      case 'Todo':
+        return filteredTasks
+            .where((task) => !task.isCompleted && task.dueDate.isAfter(DateTime.now()))
+            .toList();
+      case 'All':
+      default:
+        return filteredTasks;
+    }
+  }
+
   Widget _buildFilterChip(String label) {
-    final isSelected = label == 'All'; // Default selected filter
+    final isSelected = _selectedFilter == label;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
       margin: const EdgeInsets.only(right: 10),
       child: FilterChip(
         label: Text(label),
         selected: isSelected,
-        backgroundColor: Colors.grey.shade200,
+        backgroundColor: colorScheme.surface.withValues(alpha: 0.1),
         selectedColor: AppTheme.primary.withOpacity(0.2),
         checkmarkColor: AppTheme.primary,
         onSelected: (selected) {
-          // Handle filter selection
+          setState(() {
+            _selectedFilter = label;
+          });
         },
       ),
     );
@@ -121,6 +143,26 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
 
   Widget _buildTaskItem(Task task) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    // Determine the color based on task status
+    Color statusColor;
+    if (task.isCompleted) {
+      statusColor = Colors.green;
+    } else if (task.dueDate.isBefore(DateTime.now())) {
+      statusColor = Colors.amber;
+    } else {
+      statusColor = AppTheme.primary;
+    }
+
+    // Determine the border color for the trailing widget
+    Color borderColor;
+    if (task.isCompleted) {
+      borderColor = Colors.green; // Ignored for completed tasks (filled circle)
+    } else if (task.dueDate.isBefore(DateTime.now())) {
+      borderColor = Colors.green; // In Progress: Green border
+    } else {
+      borderColor = Colors.white; // Todo: White border
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -160,9 +202,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
             width: 24,
             height: 24,
             decoration: BoxDecoration(
-              color: task.colorCode != null
-                  ? _hexToColor(task.colorCode!)
-                  : Colors.amber,
+              color: statusColor,
               borderRadius: BorderRadius.circular(5),
             ),
           ),
@@ -207,7 +247,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                 color: task.isCompleted ? Colors.green : null,
                 border: task.isCompleted
                     ? null
-                    : Border.all(color: Colors.green, width: 2),
+                    : Border.all(color: borderColor, width: 2),
                 borderRadius: BorderRadius.circular(50),
               ),
               child: task.isCompleted
@@ -227,7 +267,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
     final titleController = TextEditingController();
     final descriptionController = TextEditingController();
     final categoryController = TextEditingController();
-    DateTime selectedDate = DateTime.now();
+    DateTime selectedDate = widget.filterDate ?? DateTime.now(); // Default to filterDate if provided
 
     showDialog(
       context: context,
@@ -305,7 +345,9 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                   category: categoryController.text.isNotEmpty
                       ? categoryController.text
                       : 'General',
-                  colorCode: '#FFAB00',
+                  colorCode: selectedDate.isBefore(DateTime.now())
+                      ? '#FFAB00' // Amber for In Progress
+                      : '#${AppTheme.primary.value.toRadixString(16).padLeft(8, '0').substring(2)}', // Primary for Todo
                 );
                 ref.read(taskProvider.notifier).addTask(newTask);
                 Navigator.pop(context);
@@ -333,7 +375,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
             const SizedBox(height: 10),
             Text('Category: ${task.category}'),
             const SizedBox(height: 10),
-            Text('Status: ${task.isCompleted ? 'Completed' : 'Pending'}'),
+            Text('Status: ${task.isCompleted ? 'Completed' : task.dueDate.isBefore(DateTime.now()) ? 'In Progress' : 'Todo'}'),
           ],
         ),
         actions: [

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:softechapp/services/calendar.dart';
 
 class CalendarEvent {
   final String id;
@@ -37,41 +38,39 @@ class CalendarEvent {
 }
 
 class CalendarNotifier extends StateNotifier<List<CalendarEvent>> {
-  CalendarNotifier() : super([
-    // Sample events for development
-    CalendarEvent(
-      id: '1',
-      title: 'Team Meeting',
-      description: 'Weekly team sync-up',
-      startTime: DateTime.now().add(const Duration(hours: 1)),
-      endTime: DateTime.now().add(const Duration(hours: 2)),
-      colorCode: '#4CAF50',
-    ),
-    CalendarEvent(
-      id: '2',
-      title: 'Doctor Appointment',
-      description: 'Annual checkup',
-      startTime: DateTime.now().add(const Duration(days: 1, hours: 10)),
-      endTime: DateTime.now().add(const Duration(days: 1, hours: 11)),
-      colorCode: '#2196F3',
-    ),
-  ]);
+  final CalendarService _calendarService = CalendarService();
 
-  void addEvent(CalendarEvent event) {
+  CalendarNotifier() : super([]) {
+    fetchEvents();
+  }
+
+  Future<void> fetchEvents() async {
+    try {
+      final events = await _calendarService.getEvents();
+      state = events;
+    } catch (e) {
+      print("Error fetching events: $e");
+    }
+  }
+
+  Future<void> addEvent(CalendarEvent event) async {
     state = [...state, event];
+    await _calendarService.addEvent(event);
   }
 
-  void removeEvent(String id) {
+  Future<void> removeEvent(String id) async {
     state = state.where((event) => event.id != id).toList();
+    await _calendarService.removeEvent(id);
   }
 
-  void updateEvent(CalendarEvent updatedEvent) {
+  Future<void> updateEvent(CalendarEvent updatedEvent) async {
     state = state.map((event) {
       if (event.id == updatedEvent.id) {
         return updatedEvent;
       }
       return event;
     }).toList();
+    await _calendarService.updateEvent(updatedEvent);
   }
 
   List<CalendarEvent> getEventsByDate(DateTime date) {
@@ -81,7 +80,7 @@ class CalendarNotifier extends StateNotifier<List<CalendarEvent>> {
           event.startTime.day == date.day;
     }).toList();
   }
-  
+
   List<CalendarEvent> getEventsByMonth(int year, int month) {
     return state.where((event) {
       return event.startTime.year == year && event.startTime.month == month;
@@ -93,4 +92,4 @@ final calendarProvider = StateNotifierProvider<CalendarNotifier, List<CalendarEv
   return CalendarNotifier();
 });
 
-final selectedDateProvider = StateProvider<DateTime>((ref) => DateTime.now()); 
+final selectedDateProvider = StateProvider<DateTime>((ref) => DateTime.now());

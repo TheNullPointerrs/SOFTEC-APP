@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../providers/calendar_provider.dart';
+import '../providers/task_provider.dart';
+import '../models/task.dart';
 import '../const/theme.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
@@ -23,16 +25,23 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     _calendarFormat = CalendarFormat.month;
     _focusedDay = ref.read(selectedDateProvider);
     _selectedDay = ref.read(selectedDateProvider);
+    // Fetch tasks and events when the screen is initialized
+    ref.read(taskProvider.notifier).fetchTasks();
+    ref.read(calendarProvider.notifier).fetchEvents();
   }
 
-  List<CalendarEvent> _getEventsForDay(DateTime day) {
-    return ref.read(calendarProvider.notifier).getEventsByDate(day);
+  List<dynamic> _getEventsForDay(DateTime day) {
+    final calendarEvents = ref.read(calendarProvider.notifier).getEventsByDate(day);
+    final tasks = ref.read(taskProvider).where((task) =>
+        task.dueDate.year == day.year &&
+        task.dueDate.month == day.month &&
+        task.dueDate.day == day.day).toList();
+    return [...calendarEvents, ...tasks];
   }
 
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final events = ref.watch(calendarProvider);
     final selectedEvents = _getEventsForDay(_selectedDay);
 
     return Scaffold(
@@ -48,15 +57,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   Text(
                     'Calendar',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.add),
-                    onPressed: () {
-                      _showAddEventDialog(context);
-                    },
-                  )
+
                 ],
               ),
               const SizedBox(height: 20),
@@ -124,14 +128,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 child: selectedEvents.isEmpty
                     ? Center(
                         child: Text(
-                          'No events for ${DateFormat('MMM dd, yyyy').format(_selectedDay)}',
+                          'No events or tasks for ${DateFormat('MMM dd, yyyy').format(_selectedDay)}',
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       )
                     : ListView.builder(
                         itemCount: selectedEvents.length,
                         itemBuilder: (context, index) {
-                          final event = selectedEvents[index];
+                          final item = selectedEvents[index];
                           return Card(
                             elevation: 2,
                             margin: const EdgeInsets.symmetric(vertical: 5),
@@ -139,26 +143,37 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                               borderRadius: BorderRadius.circular(15),
                             ),
                             child: ListTile(
-                              title: Text(event.title),
-                              subtitle: Text(event.description),
+                              title: Text(item is CalendarEvent ? item.title : item.title),
+                              subtitle: Text(item is CalendarEvent ? item.description : item.description),
                               leading: Container(
                                 width: 12,
                                 height: double.infinity,
-                                color: event.colorCode != null
-                                    ? hexToColor(event.colorCode!)
-                                    : Colors.blue,
+                                color: item is CalendarEvent
+                                    ? hexToColor(item.colorCode ?? '#4CAF50')
+                                    : hexToColor(item.colorCode ?? '#FFAB00'),
                               ),
-                              trailing: Text(
-                                '${DateFormat('HH:mm').format(event.startTime)} - ${DateFormat('HH:mm').format(event.endTime)}',
-                                style: const TextStyle(fontSize: 12),
-                              ),
+                              trailing: item is CalendarEvent
+                                  ? Text(
+                                      '${DateFormat('HH:mm').format(item.startTime)} - ${DateFormat('HH:mm').format(item.endTime)}',
+                                      style: const TextStyle(fontSize: 12),
+                                    )
+                                  : Text(
+                                      'Due: ${DateFormat('MMM dd, yyyy').format(item.dueDate)}',
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
                               onTap: () {
-                                // View event details
-                                _showEventDetails(context, event);
+                                if (item is CalendarEvent) {
+                                  _showEventDetails(context, item);
+                                } else {
+                                  _showTaskDetails(context, item);
+                                }
                               },
                               onLongPress: () {
-                                // Delete event
-                                _showDeleteConfirmation(context, event);
+                                if (item is CalendarEvent) {
+                                  _showDeleteEventConfirmation(context, item);
+                                } else {
+                                  _showDeleteTaskConfirmation(context, item);
+                                }
                               },
                             ),
                           );
@@ -169,13 +184,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _showAddEventDialog(context);
-        },
-        backgroundColor: AppTheme.primary,
-        child: const Icon(Icons.add),
-      ),
+
     );
   }
 
@@ -231,7 +240,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                           initialTime: startTime,
                         );
                         if (picked != null) {
-                          startTime = picked;
+                          setState(() {
+                            startTime = picked;
+                          });
                         }
                       },
                       child: Text('Start: ${startTime.format(context)}'),
@@ -245,7 +256,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                           initialTime: endTime,
                         );
                         if (picked != null) {
-                          endTime = picked;
+                          setState(() {
+                            endTime = picked;
+                          });
                         }
                       },
                       child: Text('End: ${endTime.format(context)}'),
@@ -264,7 +277,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           TextButton(
             onPressed: () {
               if (titleController.text.isNotEmpty) {
-                // Create start and end DateTime objects
                 final start = DateTime(
                   _selectedDay.year,
                   _selectedDay.month,
@@ -280,17 +292,15 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   endTime.minute,
                 );
 
-                // Create new event
                 final newEvent = CalendarEvent(
                   id: DateTime.now().millisecondsSinceEpoch.toString(),
                   title: titleController.text,
                   description: descriptionController.text,
                   startTime: start,
                   endTime: end,
-                  colorCode: '#4CAF50', // Default color
+                  colorCode: '#4CAF50',
                 );
 
-                // Add event to provider
                 ref.read(calendarProvider.notifier).addEvent(newEvent);
                 Navigator.pop(context);
               }
@@ -328,21 +338,63 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              _showDeleteConfirmation(context, event);
+              _showDeleteEventConfirmation(context, event);
             },
-            child: const Text('Delete'),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
   }
 
-  void _showDeleteConfirmation(BuildContext context, CalendarEvent event) {
+  void _showTaskDetails(BuildContext context, Task task) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(task.title),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Description: ${task.description}'),
+            const SizedBox(height: 10),
+            Text('Due Date: ${DateFormat('MMM dd, yyyy').format(task.dueDate)}'),
+            const SizedBox(height: 10),
+            Text('Category: ${task.category}'),
+            const SizedBox(height: 10),
+            Text('Status: ${task.isCompleted ? 'Completed' : 'Pending'}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ref.read(taskProvider.notifier).toggleTaskCompletion(task.id);
+            },
+            child: Text(task.isCompleted ? 'Mark as Incomplete' : 'Mark as Complete'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _showDeleteTaskConfirmation(context, task);
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteEventConfirmation(BuildContext context, CalendarEvent event) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Event'),
-        content: const Text('Are you sure you want to delete this event?'),
+        content: Text('Are you sure you want to delete "${event.title}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -353,10 +405,33 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               ref.read(calendarProvider.notifier).removeEvent(event.id);
               Navigator.pop(context);
             },
-            child: const Text('Delete'),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
   }
-} 
+
+  void _showDeleteTaskConfirmation(BuildContext context, Task task) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Task'),
+        content: Text('Are you sure you want to delete "${task.title}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              ref.read(taskProvider.notifier).removeTask(task.id);
+              Navigator.pop(context);
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+}
