@@ -6,7 +6,9 @@ import 'package:softechapp/providers/task_provider.dart';
 import '../const/theme.dart';
 
 class TaskScreen extends ConsumerStatefulWidget {
-  const TaskScreen({Key? key}) : super(key: key);
+  final DateTime? filterDate;
+
+  const TaskScreen({Key? key, this.filterDate}) : super(key: key);
 
   @override
   ConsumerState<TaskScreen> createState() => _TaskScreenState();
@@ -16,12 +18,24 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
   bool _showCompleted = true;
 
   @override
+  void initState() {
+    super.initState();
+    // Fetch tasks when the screen is initialized
+    ref.read(taskProvider.notifier).fetchTasks();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final tasks = ref.watch(taskProvider);
-    final displayTasks = _showCompleted 
-        ? tasks 
-        : tasks.where((task) => !task.isCompleted).toList();
-    
+    final displayTasks = widget.filterDate != null
+        ? tasks.where((task) =>
+            task.dueDate.year == widget.filterDate!.year &&
+            task.dueDate.month == widget.filterDate!.month &&
+            task.dueDate.day == widget.filterDate!.day).toList()
+        : _showCompleted
+            ? tasks
+            : tasks.where((task) => !task.isCompleted).toList();
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -33,50 +47,30 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Tasks',
+                    widget.filterDate != null
+                        ? 'Tasks for ${DateFormat('MMM dd, yyyy').format(widget.filterDate!)}'
+                        : 'Tasks',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
-                  Row(
-                    children: [
-                      // Toggle switch for showing/hiding completed tasks
-                      Switch(
-                        value: _showCompleted,
-                        activeColor: AppTheme.primary,
-                        onChanged: (value) {
-                          setState(() {
-                            _showCompleted = value;
-                          });
-                        },
-                      ),
-                      Text(
-                        'Show Completed',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ],
-                  ),
+
                 ],
               ),
-              
               const SizedBox(height: 20),
-              
-              // Task filters
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _buildFilterChip('All'),
-                    _buildFilterChip('Today'),
-                    _buildFilterChip('Upcoming'),
-                    _buildFilterChip('Priority'),
-                  ],
+              if (widget.filterDate == null)
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildFilterChip('All'),
+                      _buildFilterChip('Today'),
+                      _buildFilterChip('Upcoming'),
+                      _buildFilterChip('Priority'),
+                    ],
+                  ),
                 ),
-              ),
-              
               const SizedBox(height: 20),
-              
-              // Tasks list
               Expanded(
                 child: displayTasks.isEmpty
                     ? Center(
@@ -97,19 +91,19 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _showAddTaskDialog(context);
-        },
-        backgroundColor: AppTheme.primary,
-        child: const Icon(Icons.add),
-      ),
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: () {
+      //     _showAddTaskDialog(context);
+      //   },
+      //   backgroundColor: AppTheme.primary,
+      //   child: const Icon(Icons.add),
+      // ),
     );
   }
 
   Widget _buildFilterChip(String label) {
     final isSelected = label == 'All'; // Default selected filter
-    
+
     return Container(
       margin: const EdgeInsets.only(right: 10),
       child: FilterChip(
@@ -127,7 +121,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
 
   Widget _buildTaskItem(Task task) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
@@ -166,8 +160,8 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
             width: 24,
             height: 24,
             decoration: BoxDecoration(
-              color: task.colorCode != null 
-                  ? _hexToColor(task.colorCode!) 
+              color: task.colorCode != null
+                  ? _hexToColor(task.colorCode!)
                   : Colors.amber,
               borderRadius: BorderRadius.circular(5),
             ),
@@ -176,8 +170,8 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
             task.title,
             style: TextStyle(
               decoration: task.isCompleted ? TextDecoration.lineThrough : null,
-              color: task.isCompleted 
-                  ? Theme.of(context).disabledColor 
+              color: task.isCompleted
+                  ? Theme.of(context).disabledColor
                   : Theme.of(context).textTheme.titleMedium?.color,
             ),
           ),
@@ -277,7 +271,9 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                     lastDate: DateTime(2101),
                   );
                   if (picked != null) {
-                    selectedDate = picked;
+                    setState(() {
+                      selectedDate = picked;
+                    });
                   }
                 },
                 child: InputDecorator(
@@ -301,19 +297,16 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
           TextButton(
             onPressed: () {
               if (titleController.text.isNotEmpty) {
-                // Create new task
                 final newTask = Task(
                   id: DateTime.now().millisecondsSinceEpoch.toString(),
                   title: titleController.text,
                   description: descriptionController.text,
                   dueDate: selectedDate,
-                  category: categoryController.text.isNotEmpty 
-                      ? categoryController.text 
+                  category: categoryController.text.isNotEmpty
+                      ? categoryController.text
                       : 'General',
                   colorCode: '#FFAB00',
                 );
-
-                // Add task to provider
                 ref.read(taskProvider.notifier).addTask(newTask);
                 Navigator.pop(context);
               }
@@ -358,7 +351,6 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              // Show delete confirmation
               _showDeleteConfirmation(context, task);
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
@@ -398,4 +390,4 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
       return Colors.amber;
     }
   }
-} 
+}
