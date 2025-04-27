@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:softechapp/models/task.dart';
 import 'package:softechapp/providers/task_provider.dart';
+import 'package:softechapp/screens/Addtask.dart';
 import '../const/theme.dart';
 
 class TaskScreen extends ConsumerStatefulWidget {
@@ -117,6 +118,32 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
         return filteredTasks;
     }
   }
+
+  // List<Task> _filterTasks(List<Task> tasks) {
+  //   List<Task> filteredTasks = tasks;
+  //   if (widget.filterDate != null) {
+  //     filteredTasks = tasks.where((task) =>
+  //         task.dueDate.year == widget.filterDate!.year &&
+  //         task.dueDate.month == widget.filterDate!.month &&
+  //         task.dueDate.day == widget.filterDate!.day).toList();
+  //   }
+
+  //   switch (_selectedFilter) {
+  //     case 'Completed':
+  //       return filteredTasks.where((task) => task.isCompleted).toList();
+  //     case 'In Progress':
+  //       return filteredTasks
+  //           .where((task) => !task.isCompleted && task.dueDate.isBefore(DateTime.now()))
+  //           .toList();
+  //     case 'Todo':
+  //       return filteredTasks
+  //           .where((task) => !task.isCompleted && task.dueDate.isAfter(DateTime.now()))
+  //           .toList();
+  //     case 'All':
+  //     default:
+  //       return filteredTasks;
+  //   }
+  // }
 
   Widget _buildFilterChip(String label) {
     final isSelected = _selectedFilter == label;

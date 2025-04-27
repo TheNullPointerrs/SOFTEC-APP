@@ -2,7 +2,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class OCRService {
-  final String apiKey = 'YOUR_OCR_API_KEY';
+  final String apiKey = 'K86734045288957';
 
   Future<String> sendImageUrlToOCR(String imageUrl) async {
     try {
