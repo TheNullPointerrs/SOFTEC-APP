@@ -46,6 +46,12 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 
+	<!-- Camera permissions -->
+	<key>NSCameraUsageDescription</key>
+	<string>We need camera access to scan text for tasks</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need photo library access to get images for OCR</string>
+
 	<!-- Google Sign-In Client ID -->
 	<key>GIDClientID</key>
 	<string>766993715782-qq2qr7btru9bcsipvrsfank5kt6rq4e7.apps.googleusercontent.com</string>

@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'dart:convert';
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import '../const/theme.dart';
 import '../providers/quote_provider.dart';
 import '../providers/task_provider.dart';
@@ -80,6 +84,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _showAddTaskOptions(context);
+        },
+        backgroundColor: AppTheme.primary,
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -543,29 +554,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
                 
-                // // Add button for mood
-                // Align(
-                //   alignment: Alignment.centerRight,
-                //   child: GestureDetector(
-                //     onTap: () {
-                //       // Show mood input dialog
-                //       MoodInputModal.show(context);
-                //     },
-                //     child: Container(
-                //       margin: const EdgeInsets.only(top: 10, right: 10),
-                //       width: 40,
-                //       height: 40,
-                //       decoration: BoxDecoration(
-                //         color: AppTheme.primary,
-                //         borderRadius: BorderRadius.circular(50),
-                //       ),
-                //       child: const Icon(
-                //         Icons.add,
-                //         color: Colors.white,
-                //       ),
-                //     ),
-                //   ),
-                // ),
                 
                 const SizedBox(height: 20),
                 
@@ -631,6 +619,349 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  void _showAddTaskOptions(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: isDarkMode ? const Color(0xFF262626) : Colors.white,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 10,
+                spreadRadius: 0,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                "Add Your Task",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                ),
+              ),
+              const SizedBox(height: 30),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildOptionButton(
+                    context: context,
+                    icon: Icons.camera_alt,
+                    label: "OCR",
+                    onTap: () {
+                      Navigator.pop(context);
+                      _captureAndProcessImage();
+                    },
+                  ),
+                  _buildOptionButton(
+                    context: context,
+                    icon: Icons.text_fields,
+                    label: "Text",
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showTaskInputDialog(context, "");
+                    },
+                  ),
+                  _buildOptionButton(
+                    context: context,
+                    icon: Icons.mic,
+                    label: "Voice",
+                    onTap: () {
+                      Navigator.pop(context);
+                      // Show a message that voice input will be implemented soon
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Voice input coming soon!'),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 30),
+            ],
+          ),
+        );
+      },
+    );
+  }
+  
+  Widget _buildOptionButton({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              color: isDarkMode ? Colors.black12 : Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(
+                color: AppTheme.primary.withOpacity(0.3),
+              ),
+            ),
+            child: Icon(
+              icon,
+              color: AppTheme.primary,
+              size: 30,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Future<void> _captureAndProcessImage() async {
+    try {
+      // For handling image selection
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Image Source'),
+          content: const Text('Would you like to take a new photo or use an existing one?'),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                _showLoadingDialog(context, "Processing...");
+                
+                // In a real implementation, this would use image_picker
+                // For now, we'll simulate by directly showing the task input dialog
+                Navigator.of(context).pop(); // Close loading dialog
+                _showTaskInputDialog(context, "Sample OCR text from image");
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Image picker package not installed. Using sample text.'),
+                  ),
+                );
+              },
+              child: const Text('Camera'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                _showLoadingDialog(context, "Processing...");
+                
+                // In a real implementation, this would use image_picker
+                // For now, we'll simulate by directly showing the task input dialog
+                Navigator.of(context).pop(); // Close loading dialog
+                _showTaskInputDialog(context, "Sample OCR text from gallery image");
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Image picker package not installed. Using sample text.'),
+                  ),
+                );
+              },
+              child: const Text('Gallery'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      _showErrorDialog("Error: $e");
+    }
+  }
+  
+  Future<String> _sendImageToAPI(File file) async {
+    final url = Uri.parse("https://softec-backend.onrender.com/ocr");
+    
+    // Create multipart request
+    final request = http.MultipartRequest('POST', url);
+    
+    // Add the file to the request
+    request.files.add(
+      await http.MultipartFile.fromPath('file', file.path)
+    );
+    
+    try {
+      // Send request and get response
+      final response = await request.send();
+      
+      if (response.statusCode == 200) {
+        // Parse response
+        final responseData = await response.stream.bytesToString();
+        final jsonData = jsonDecode(responseData);
+        
+        // Extract the text
+        final extractedText = jsonData['extracted_text'] ?? '';
+        return extractedText;
+      } else {
+        throw Exception('Failed to process image: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error sending image to API: $e');
+    }
+  }
+  
+  void _showLoadingDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text(message),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _showTaskInputDialog(BuildContext context, String taskText) {
+    final TextEditingController titleController = TextEditingController(text: taskText);
+    final TextEditingController descController = TextEditingController();
+    DateTime dueDate = DateTime.now();
+    String category = 'General';
+    
+    showDialog(
+      context: context,
+      builder: (context) {
+        final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+        
+        return AlertDialog(
+          backgroundColor: isDarkMode ? const Color(0xFF262626) : Colors.white,
+          title: const Text('Add Task'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: InputDecoration(
+                    labelText: 'Task Title',
+                    filled: true,
+                    fillColor: isDarkMode ? Colors.black12 : Colors.grey.shade100,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: descController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    labelText: 'Description (optional)',
+                    filled: true,
+                    fillColor: isDarkMode ? Colors.black12 : Colors.grey.shade100,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Due Date: ${DateFormat('dd MMM yyyy').format(dueDate)}',
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final title = titleController.text.trim();
+                if (title.isNotEmpty) {
+                  // Create a new task
+                  final newTask = Task(
+                    id: DateTime.now().millisecondsSinceEpoch.toString(),
+                    title: title,
+                    description: descController.text.trim(),
+                    dueDate: dueDate,
+                    category: category,
+                    colorCode: '#FFAB00',
+                  );
+                  
+                  // Add task to the provider
+                  ref.read(taskProvider.notifier).addTask(newTask);
+                  Navigator.of(context).pop();
+                  
+                  // Show success message
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Task added successfully'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primary,
+              ),
+              child: const Text('Add Task'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
