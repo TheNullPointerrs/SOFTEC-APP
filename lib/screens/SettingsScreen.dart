@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:softechapp/const/theme.dart';
 import 'package:softechapp/providers/fontProvider.dart';
+import 'package:softechapp/screens/Onboarding.dart';
 import 'package:softechapp/services/auth.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -204,6 +205,9 @@ class SettingsScreen extends ConsumerWidget {
   }
   
   void _handleLogout(BuildContext context) async {
+    // Store context mounted state in a variable to check later
+    final navigatorContext = context;
+    
     // Show confirmation dialog
     final shouldLogout = await showDialog<bool>(
       context: context,
@@ -224,28 +228,28 @@ class SettingsScreen extends ConsumerWidget {
       ),
     );
     
-    if (shouldLogout == true) {
-      // Show loading indicator
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(child: CircularProgressIndicator()),
-      );
-      
+    // Check if context is still valid and user confirmed logout
+    if (shouldLogout == true && navigatorContext.mounted) {
       try {
-        // Perform logout
+        // Perform logout (don't show loading indicator as it can cause context issues)
         final authService = AuthService();
         await authService.signOut();
         
-        // Close loading dialog and navigate to login
-        Navigator.pop(context); // Close loading dialog
-        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+        // Navigate to onboarding if context is still mounted
+        if (navigatorContext.mounted) {
+          Navigator.pushAndRemoveUntil(
+            navigatorContext,
+            MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+            (route) => false
+          );
+        }
       } catch (e) {
-        // Close loading dialog and show error
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error logging out: $e')),
-        );
+        // Show error if context is still mounted
+        if (navigatorContext.mounted) {
+          ScaffoldMessenger.of(navigatorContext).showSnackBar(
+            SnackBar(content: Text('Error logging out: $e')),
+          );
+        }
       }
     }
   }

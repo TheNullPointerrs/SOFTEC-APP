@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:softechapp/providers/fontProvider.dart';
+import 'package:softechapp/screens/LoginScreen.dart';
 import 'package:softechapp/widegts/centerglow.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
@@ -148,7 +149,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                         ),
                       ),
                       onPressed: () {
-                              Navigator.pushNamed(context, '/login');
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => LoginScreen()));
 
                       },
                       child: Text(

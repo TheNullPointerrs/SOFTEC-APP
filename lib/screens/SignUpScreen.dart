@@ -678,82 +678,82 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     ),
                   ),
                 
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          height: 1,
-                          color: primaryTextColor.withOpacity(0.3),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Text(
-                          'OR',
-                          style: TextStyle(
-                            color: primaryTextColor.withOpacity(0.8),
-                            fontSize: currentFontSize * 0.8,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Container(
-                          height: 1,
-                          color: primaryTextColor.withOpacity(0.3),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                // Padding(
+                //   padding: const EdgeInsets.symmetric(vertical: 16.0),
+                //   child: Row(
+                //     children: [
+                //       Expanded(
+                //         child: Container(
+                //           height: 1,
+                //           color: primaryTextColor.withOpacity(0.3),
+                //         ),
+                //       ),
+                //       Padding(
+                //         padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                //         child: Text(
+                //           'OR',
+                //           style: TextStyle(
+                //             color: primaryTextColor.withOpacity(0.8),
+                //             fontSize: currentFontSize * 0.8,
+                //           ),
+                //         ),
+                //       ),
+                //       Expanded(
+                //         child: Container(
+                //           height: 1,
+                //           color: primaryTextColor.withOpacity(0.3),
+                //         ),
+                //       ),
+                //     ],
+                //   ),
+                // ),
                 
-                Container(
-                  width: double.infinity,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: isDarkMode ? Colors.white.withOpacity(0.3) : Colors.black.withOpacity(0.3),
-                    ),
-                    color: isDarkMode ? Colors.black.withOpacity(0.3) : Colors.white,
-                  ),
-                  child: ElevatedButton(
-                    onPressed: _signInWithGoogle,
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: primaryTextColor,
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                              image: AssetImage('assets/images/google.png'),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        Text(
-                          'Continue with Google',
-                          style: TextStyle(
-                            color: primaryTextColor,
-                            fontSize: currentFontSize,
-                            fontWeight: FontWeight.normal,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                // Container(
+                //   width: double.infinity,
+                //   height: 50,
+                //   decoration: BoxDecoration(
+                //     borderRadius: BorderRadius.circular(8),
+                //     border: Border.all(
+                //       color: isDarkMode ? Colors.white.withOpacity(0.3) : Colors.black.withOpacity(0.3),
+                //     ),
+                //     color: isDarkMode ? Colors.black.withOpacity(0.3) : Colors.white,
+                //   ),
+                //   child: ElevatedButton(
+                //     onPressed: _signInWithGoogle,
+                //     style: ElevatedButton.styleFrom(
+                //       foregroundColor: primaryTextColor,
+                //       backgroundColor: Colors.transparent,
+                //       shadowColor: Colors.transparent,
+                //       shape: RoundedRectangleBorder(
+                //         borderRadius: BorderRadius.circular(8),
+                //       ),
+                //     ),
+                //     child: Row(
+                //       mainAxisAlignment: MainAxisAlignment.center,
+                //       children: [
+                //         Container(
+                //           width: 24,
+                //           height: 24,
+                //           decoration: BoxDecoration(
+                //             image: DecorationImage(
+                //               image: AssetImage('assets/images/google.png'),
+                //               fit: BoxFit.cover,
+                //             ),
+                //           ),
+                //         ),
+                //         SizedBox(width: 12),
+                //         Text(
+                //           'Continue with Google',
+                //           style: TextStyle(
+                //             color: primaryTextColor,
+                //             fontSize: currentFontSize,
+                //             fontWeight: FontWeight.normal,
+                //           ),
+                //         ),
+                //       ],
+                //     ),
+                //   ),
+                // ),
                 
                 const SizedBox(height: 60),
                 

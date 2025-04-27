@@ -6,6 +6,7 @@ import 'package:softechapp/const/theme.dart';
 import 'package:softechapp/providers/profile_provider.dart';
 import 'package:softechapp/providers/task_provider.dart';
 import 'package:softechapp/providers/theme_provider.dart';
+import 'package:softechapp/screens/Onboarding.dart';
 import 'package:softechapp/services/auth.dart';
 import 'package:intl/intl.dart';
 import 'package:softechapp/providers/fontProvider.dart';
@@ -631,21 +632,25 @@ class CustomizationBottomSheet extends ConsumerWidget {
   }
   
   void _handleLogout(BuildContext context) async {
-    Navigator.pop(context); // Close the bottom sheet
+    // Store context and close the bottom sheet
+    final navigatorContext = Navigator.of(context);
+    navigatorContext.pop(); // Close the bottom sheet
     
-    // Show confirmation dialog
+    // No need to check if mounted here since we're using a locally captured navigator
+    
+    // Show confirmation dialog with the navigator's context
     final shouldLogout = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
+      context: navigatorContext.context,
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Confirm Logout'),
         content: const Text('Are you sure you want to log out?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.pop(dialogContext, false),
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(dialogContext, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Logout'),
           ),
@@ -653,28 +658,23 @@ class CustomizationBottomSheet extends ConsumerWidget {
       ),
     );
     
-    if (shouldLogout == true) {
-      // Show loading indicator
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(child: CircularProgressIndicator()),
-      );
-      
+    // If the user confirmed logout and the context is still valid
+    if (shouldLogout == true && navigatorContext.context.mounted) {
       try {
-        // Perform logout
+        // Perform logout (without showing a loading dialog)
         final authService = AuthService();
         await authService.signOut();
         
-        // Close loading dialog and navigate to login
-        Navigator.pop(context); // Close loading dialog
-        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+        // Navigate to login if context is still mounted
+        if (navigatorContext.context.mounted) {
+          Navigator.push(navigatorContext.context, MaterialPageRoute(builder: (context) => OnboardingScreen()));
+        }
       } catch (e) {
-        // Close loading dialog and show error
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error logging out: $e')),
-        );
+        if (navigatorContext.context.mounted) {
+          ScaffoldMessenger.of(navigatorContext.context).showSnackBar(
+            SnackBar(content: Text('Error logging out: $e')),
+          );
+        }
       }
     }
   }
