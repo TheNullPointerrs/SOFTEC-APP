@@ -15,7 +15,7 @@ class TaskScreen extends ConsumerStatefulWidget {
 }
 
 class _TaskScreenState extends ConsumerState<TaskScreen> {
-  String _selectedFilter = 'All'; // Track the selected filter
+  String _selectedFilter = 'All';
 
   @override
   void initState() {
@@ -93,7 +93,6 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
   }
 
   List<Task> _filterTasks(List<Task> tasks) {
-    // Step 1: Apply date filter if filterDate is provided
     List<Task> filteredTasks = tasks;
     if (widget.filterDate != null) {
       filteredTasks = tasks.where((task) =>
@@ -102,7 +101,6 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
           task.dueDate.day == widget.filterDate!.day).toList();
     }
 
-    // Step 2: Apply status filter based on _selectedFilter
     switch (_selectedFilter) {
       case 'Completed':
         return filteredTasks.where((task) => task.isCompleted).toList();
@@ -144,7 +142,6 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
   Widget _buildTaskItem(Task task) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    // Determine the color based on task status
     Color statusColor;
     if (task.isCompleted) {
       statusColor = Colors.green;
@@ -154,14 +151,13 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
       statusColor = AppTheme.primary;
     }
 
-    // Determine the border color for the trailing widget
     Color borderColor;
     if (task.isCompleted) {
-      borderColor = Colors.green; // Ignored for completed tasks (filled circle)
+      borderColor = Colors.green;
     } else if (task.dueDate.isBefore(DateTime.now())) {
-      borderColor = Colors.green; // In Progress: Green border
+      borderColor = Colors.green;
     } else {
-      borderColor = Colors.white; // Todo: White border
+      borderColor = Colors.white;
     }
 
     return Container(
@@ -220,7 +216,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
             children: [
               const SizedBox(height: 5),
               Text(
-                'Due: ${DateFormat('MMM dd, yyyy').format(task.dueDate)}',
+                'Due: ${DateFormat('MMM dd, yyyy, h:mm a').format(task.dueDate)}',
                 style: TextStyle(
                   fontSize: 12,
                   color: Theme.of(context).textTheme.bodySmall?.color,
@@ -267,7 +263,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
     final titleController = TextEditingController();
     final descriptionController = TextEditingController();
     final categoryController = TextEditingController();
-    DateTime selectedDate = widget.filterDate ?? DateTime.now(); // Default to filterDate if provided
+    DateTime selectedDate = widget.filterDate ?? DateTime.now();
 
     showDialog(
       context: context,
@@ -304,25 +300,37 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
               const SizedBox(height: 10),
               InkWell(
                 onTap: () async {
-                  final picked = await showDatePicker(
+                  final pickedDate = await showDatePicker(
                     context: context,
                     initialDate: selectedDate,
                     firstDate: DateTime.now(),
                     lastDate: DateTime(2101),
                   );
-                  if (picked != null) {
-                    setState(() {
-                      selectedDate = picked;
-                    });
+                  if (pickedDate != null) {
+                    final pickedTime = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay.fromDateTime(selectedDate),
+                    );
+                    if (pickedTime != null) {
+                      selectedDate = DateTime(
+                        pickedDate.year,
+                        pickedDate.month,
+                        pickedDate.day,
+                        pickedTime.hour,
+                        pickedTime.minute,
+                      );
+                      // Trigger rebuild to update displayed date/time
+                      (context as Element).markNeedsBuild();
+                    }
                   }
                 },
                 child: InputDecorator(
                   decoration: const InputDecoration(
-                    labelText: 'Due Date',
+                    labelText: 'Due Date & Time',
                     border: OutlineInputBorder(),
                   ),
                   child: Text(
-                    DateFormat('MMM dd, yyyy').format(selectedDate),
+                    DateFormat('MMM dd, yyyy, h:mm a').format(selectedDate),
                   ),
                 ),
               ),
@@ -345,12 +353,21 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                   category: categoryController.text.isNotEmpty
                       ? categoryController.text
                       : 'General',
+                  isCompleted: false,
                   colorCode: selectedDate.isBefore(DateTime.now())
-                      ? '#FFAB00' // Amber for In Progress
-                      : '#${AppTheme.primary.value.toRadixString(16).padLeft(8, '0').substring(2)}', // Primary for Todo
+                      ? '#FFAB00'
+                      : '#${AppTheme.primary.value.toRadixString(16).padLeft(8, '0').substring(2)}',
+                  parentId: '-',
                 );
                 ref.read(taskProvider.notifier).addTask(newTask);
                 Navigator.pop(context);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please enter a task title'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
               }
             },
             child: const Text('Save'),
@@ -371,7 +388,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
           children: [
             Text('Description: ${task.description}'),
             const SizedBox(height: 10),
-            Text('Due Date: ${DateFormat('MMM dd, yyyy').format(task.dueDate)}'),
+            Text('Due: ${DateFormat('MMM dd, yyyy, h:mm a').format(task.dueDate)}'),
             const SizedBox(height: 10),
             Text('Category: ${task.category}'),
             const SizedBox(height: 10),

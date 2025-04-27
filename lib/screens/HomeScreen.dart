@@ -12,6 +12,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:softechapp/models/task.dart';
 import 'package:softechapp/screens/Addtask.dart';
 import 'package:softechapp/screens/TaskScreen.dart';
+import 'package:softechapp/screens/quicktask.dart';
 import 'package:softechapp/widegts/mood_input_modal.dart';
 import 'package:softechapp/screens/NotificationsScreen.dart';
 import 'package:lottie/lottie.dart';
@@ -22,6 +23,9 @@ import '../providers/quote_provider.dart';
 import '../providers/task_provider.dart';
 import '../providers/mood_provider.dart';
 import '../providers/calendar_provider.dart';
+import '../services/firebase_storage_service.dart';
+import '../services/ocr_service.dart';
+import '../utils/image_picker_utils.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -31,6 +35,11 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+
+    final FirebaseStorageService _firebaseStorageService = FirebaseStorageService();
+  final OCRService _ocrService = OCRService();
+  final ImagePickerUtils _imagePickerUtils = ImagePickerUtils();
+  
   @override
   void initState() {
     super.initState();
@@ -681,88 +690,97 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  void _showAddTaskOptions(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: isDarkMode ? const Color(0xFF262626) : Colors.white,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
+void _showAddTaskOptions(BuildContext context) {
+  final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (context) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isDarkMode ? const Color(0xFF262626) : Colors.white,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 10,
+              spreadRadius: 0,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 10,
-                spreadRadius: 0,
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 5,
+              decoration: BoxDecoration(
+                color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(10),
               ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(10),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              "Add Your Task",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
+            ),
+            const SizedBox(height: 30),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildOptionButton(
+                  context: context,
+                  icon: Icons.camera_alt,
+                  label: "OCR",
+                  onTap: () {
+                    Navigator.pop(context);
+                    _captureAndProcessImage();
+                  },
                 ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                "Add Your Task",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                _buildOptionButton(
+                  context: context,
+                  icon: Icons.text_fields,
+                  label: "Text",
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => AddTaskScreen()));
+                  },
                 ),
-              ),
-              const SizedBox(height: 30),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildOptionButton(
-                    context: context,
-                    icon: Icons.camera_alt,
-                    label: "OCR",
-                    onTap: () {
-                      Navigator.pop(context);
-                      _captureAndProcessImage();
-                    },
-                  ),
-                  _buildOptionButton(
-                    context: context,
-                    icon: Icons.text_fields,
-                    label: "Text",
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => AddTaskScreen()));
-                    },
-                  ),
-                  _buildOptionButton(
-                    context: context,
-                    icon: Icons.mic,
-                    label: "Voice",
-                    onTap: () {
-                      _startVoiceInput();
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 30),
-            ],
-          ),
-        );
-      },
-    );
-  }
+                _buildOptionButton(
+                  context: context,
+                  icon: Icons.mic,
+                  label: "Voice",
+                  onTap: () {
+                    _startVoiceInput();
+                  },
+                ),
+                _buildOptionButton(
+                  context: context,
+                  icon: Icons.bolt,
+                  label: "Quick Task",
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => QuickTaskScreen()));
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 30),
+          ],
+        ),
+      );
+    },
+  );
+}
   
   Widget _buildOptionButton({
     required BuildContext context,
@@ -804,97 +822,62 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
     );
   }
-  
+ 
   Future<void> _captureAndProcessImage() async {
     try {
-      final ImagePicker picker = ImagePicker();
-      
-      // For handling image selection
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Image Source'),
-          content: const Text('Would you like to take a new photo or use an existing one?'),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                Navigator.of(context).pop();
-                
-                final XFile? photo = await picker.pickImage(source: ImageSource.camera);
-                if (photo != null) {
-                  _processSelectedImage(File(photo.path));
-                }
-              },
-              child: const Text('Camera'),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.of(context).pop();
-                
-                final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-                if (image != null) {
-                  _processSelectedImage(File(image.path));
-                }
-              },
-              child: const Text('Gallery'),
-            ),
-          ],
-        ),
-      );
+      // Pick an image from gallery or camera
+      File? imageFile = await _imagePickerUtils.pickImageFromGallery();
+      if (imageFile == null) return;
+
+      // Upload image to Firebase Storage
+      String imageUrl = await _firebaseStorageService.uploadImage(imageFile);
+
+      // Send image URL to OCR API
+      String extractedText = await _ocrService.sendImageUrlToOCR(imageUrl);
+
+      // Show the extracted text
+      _showExtractedTextDialog(extractedText);
     } catch (e) {
       _showErrorDialog("Error: $e");
     }
   }
-  
-  Future<void> _processSelectedImage(File imageFile) async {
-    try {
-      _showLoadingDialog(context, "Processing image...");
-      
-      // Send the image to the OCR API
-      final extractedText = await _sendImageToAPI(imageFile);
-      
-      // Close the loading dialog
-      Navigator.of(context).pop();
-      
-      // Show the task input dialog with the extracted text
-      _showTaskInputDialog(context, extractedText);
-    } catch (e) {
-      // Close the loading dialog if it's open
-      Navigator.of(context).pop();
-      _showErrorDialog("Error processing image: $e");
-    }
-  }
-  
-  Future<String> _sendImageToAPI(File file) async {
-    final url = Uri.parse("https://softec-backend.onrender.com/ocr");
-    
-    // Create multipart request
-    final request = http.MultipartRequest('POST', url);
-    
-    // Add the file to the request
-    request.files.add(
-      await http.MultipartFile.fromPath('file', file.path)
+
+  void _showExtractedTextDialog(String extractedText) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Extracted Text'),
+          content: Text(extractedText),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
     );
-    
-    try {
-      // Send request and get response
-      final response = await request.send();
-      
-      if (response.statusCode == 200) {
-        // Parse response
-        final responseData = await response.stream.bytesToString();
-        final jsonData = jsonDecode(responseData);
-        
-        // Extract the text
-        final extractedText = jsonData['extracted_text'] ?? '';
-        return extractedText;
-      } else {
-        throw Exception('Failed to process image: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error sending image to API: $e');
-    }
   }
+
+  void _showErrorDialog(String error) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Error'),
+          content: Text(error),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   
   void _showLoadingDialog(BuildContext context, String message) {
     showDialog(
@@ -913,21 +896,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
   
-  void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Error'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
+  
   
   void _showTaskInputDialog(BuildContext context, String taskText) {
     final TextEditingController titleController = TextEditingController(text: taskText);

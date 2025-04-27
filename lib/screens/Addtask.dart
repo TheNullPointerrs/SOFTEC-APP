@@ -17,13 +17,12 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
   final TextEditingController descController = TextEditingController();
   DateTime dueDate = DateTime.now();
   String category = 'General';
-  List<String> subtasks = []; // Store subtasks
-  List<String> subtaskDescriptions = []; // Store subtask descriptions
+  List<String> subtasks = [];
+  List<String> subtaskDescriptions = [];
 
-@override
+  @override
   void initState() {
     super.initState();
-    // Initialize titleController in initState to access widget.title
     titleController = TextEditingController(
       text: widget.title != null && widget.title!.isNotEmpty ? widget.title : '',
     );
@@ -31,12 +30,10 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
 
   @override
   void dispose() {
-    // Dispose controllers to prevent memory leaks
     titleController.dispose();
     descController.dispose();
     super.dispose();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -82,20 +79,22 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Due Date Selection
+              // Due Date and Time Selection
               Row(
                 children: [
-                  const Text('Due Date: ', style: TextStyle(fontSize: 16)),
-                  Text(
-                    DateFormat('dd MMM yyyy').format(dueDate),
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: isDarkMode ? Colors.white : Colors.black,
+                  const Text('Due Date & Time: ', style: TextStyle(fontSize: 16)),
+                  Expanded(
+                    child: Text(
+                      DateFormat('dd MMM yyyy, h:mm a').format(dueDate),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
                     ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.calendar_today),
-                    onPressed: _selectDueDate,
+                    onPressed: _selectDueDateTime,
                   ),
                 ],
               ),
@@ -109,6 +108,9 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
               ..._buildSubtaskFields(),
               ElevatedButton(
                 onPressed: _addSubtask,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                ),
                 child: const Text('Add Subtask'),
               ),
               const SizedBox(height: 20),
@@ -118,6 +120,7 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                 onPressed: _saveTask,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blueAccent,
+                  minimumSize: const Size(double.infinity, 50),
                 ),
                 child: const Text('Save Task'),
               ),
@@ -128,21 +131,36 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
     );
   }
 
-  Future<void> _selectDueDate() async {
+  Future<void> _selectDueDateTime() async {
+    // Select Date
     final selectedDate = await showDatePicker(
       context: context,
       initialDate: dueDate,
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
     );
-    if (selectedDate != null && selectedDate != dueDate) {
-      setState(() {
-        dueDate = selectedDate;
-      });
+
+    if (selectedDate != null) {
+      // Select Time
+      final selectedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(dueDate),
+      );
+
+      if (selectedTime != null) {
+        setState(() {
+          dueDate = DateTime(
+            selectedDate.year,
+            selectedDate.month,
+            selectedDate.day,
+            selectedTime.hour,
+            selectedTime.minute,
+          );
+        });
+      }
     }
   }
 
-  // Build the subtask fields dynamically
   List<Widget> _buildSubtaskFields() {
     return List.generate(subtasks.length, (index) {
       return Padding(
@@ -150,7 +168,22 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
         child: Row(
           children: [
             Expanded(
-              child: Text(subtasks[index]),
+              child: TextField(
+                onChanged: (value) {
+                  subtasks[index] = value;
+                },
+                decoration: InputDecoration(
+                  labelText: 'Subtask ${index + 1}',
+                  filled: true,
+                  fillColor: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.black12
+                      : Colors.grey.shade100,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                controller: TextEditingController(text: subtasks[index]),
+              ),
             ),
             IconButton(
               icon: const Icon(Icons.remove_circle, color: Colors.red),
@@ -162,60 +195,69 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
     });
   }
 
-  // Add a new subtask
   void _addSubtask() {
     setState(() {
       subtasks.add('New Subtask');
-      subtaskDescriptions.add(''); 
+      subtaskDescriptions.add('');
     });
   }
 
   void _removeSubtask(int index) {
     setState(() {
       subtasks.removeAt(index);
-      subtaskDescriptions.removeAt(index); 
+      subtaskDescriptions.removeAt(index);
     });
   }
 
-void _saveTask() async {
-  final title = titleController.text.trim();
-  if (title.isNotEmpty) {
-    final mainTask = Task(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: title,
-      description: descController.text.trim(),
-      dueDate: dueDate,
-      category: category,
-      colorCode: '#FFAB00',
-      parentId: '-', 
-    );
-
-    // Add the main task first, then subtasks
-    ref.read(taskProvider.notifier).addTask(mainTask);
-
-    // Add subtasks
-    for (int i = 0; i < subtasks.length; i++) {
-      final subtask = Task(
+  void _saveTask() async {
+    final title = titleController.text.trim();
+    if (title.isNotEmpty) {
+      final mainTask = Task(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
-        title: subtasks[i],
-        description: subtaskDescriptions[i],
-        dueDate: dueDate, 
+        title: title,
+        description: descController.text.trim(),
+        dueDate: dueDate,
         category: category,
-        colorCode: '#FFAB00',
-        parentId: mainTask.id, 
+        colorCode: dueDate.isBefore(DateTime.now()) ? '#FFAB00' : '#${Colors.blueAccent.value.toRadixString(16).padLeft(8, '0').substring(2)}',
+        isCompleted: false,
+        parentId: '-',
       );
-      ref.read(taskProvider.notifier).addTask(subtask);
+
+      // Add the main task
+      ref.read(taskProvider.notifier).addTask(mainTask);
+
+      // Add subtasks
+      for (int i = 0; i < subtasks.length; i++) {
+        if (subtasks[i].trim().isNotEmpty) {
+          final subtask = Task(
+            id: DateTime.now().millisecondsSinceEpoch.toString() + '_$i',
+            title: subtasks[i].trim(),
+            description: subtaskDescriptions[i],
+            dueDate: dueDate,
+            category: category,
+            colorCode: mainTask.colorCode,
+            isCompleted: false,
+            parentId: mainTask.id,
+          );
+          ref.read(taskProvider.notifier).addTask(subtask);
+        }
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Task added successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a task title'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Task added successfully'),
-        backgroundColor: Colors.green,
-      ),
-    );
-
-    Navigator.pop(context);
   }
-}
-
 }

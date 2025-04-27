@@ -17,6 +17,28 @@ class DatabaseService {
   await userRef.set(user.toMap());
 }
 
+static Future<UserModel?> getUserProfile(String userId) async {
+  try {
+    final userDoc = await _usersCollection.doc(userId).get();
+    
+    if (userDoc.exists) {
+      final data = userDoc.data();
+      if (data != null) {
+        return UserModel.fromMap(userId, data);  // Pass the userId here
+      } else {
+        print('No data found for the user');
+        return null;
+      }
+    } else {
+      print('User not found.');
+      return null; // Return null if user doesn't exist
+    }
+  } catch (e) {
+    print('Error fetching user profile: $e');
+    return null; // Return null in case of error
+  }
+}
+
   // Collection references
   static CollectionReference<Map<String, dynamic>> get _usersCollection => 
       _firestore.collection('users');

@@ -117,7 +117,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         name: nameController.text.trim(), // Use the entered name
         email: emailController.text.trim(), // Use the entered email
         moodStreak: 0,
-        preferences: {}, 
         notificationsEnabled: false,
         theme: 'light',
         createdAt: DateTime.now().toIso8601String(),
