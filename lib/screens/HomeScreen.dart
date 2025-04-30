@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -949,30 +948,50 @@ void _showAddTaskOptions(BuildContext context) {
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 final title = titleController.text.trim();
                 if (title.isNotEmpty) {
-                  // Create a new task
-                  final newTask = Task(
-                    id: DateTime.now().millisecondsSinceEpoch.toString(),
-                    title: title,
-                    description: descController.text.trim(),
-                    dueDate: dueDate,
-                    category: category,
-                    colorCode: '#FFAB00',
-                  );
+                  // Show loading indicator
+                  _showLoadingDialog(context, 'Adding task...');
                   
-                  // Add task to the provider
-                  ref.read(taskProvider.notifier).addTask(newTask);
-                  Navigator.of(context).pop();
-                  
-                  // Show success message
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Task added successfully'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
+                  try {
+                    // Create a new task
+                    final newTask = Task(
+                      id: DateTime.now().millisecondsSinceEpoch.toString(),
+                      title: title,
+                      description: descController.text.trim(),
+                      dueDate: dueDate,
+                      category: category,
+                      colorCode: '#FFAB00',
+                    );
+                    
+                    // Add task to the provider
+                    await ref.read(taskProvider.notifier).addTask(newTask);
+                    
+                    // Close the loading dialog
+                    Navigator.of(context, rootNavigator: true).pop();
+                    // Close the input dialog
+                    Navigator.of(context).pop();
+                    
+                    // Show success message
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Task added successfully'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  } catch (e) {
+                    // Close the loading dialog
+                    Navigator.of(context, rootNavigator: true).pop();
+                    
+                    // Show error message
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to add task: ${e.toString()}'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 }
               },
               style: ElevatedButton.styleFrom(

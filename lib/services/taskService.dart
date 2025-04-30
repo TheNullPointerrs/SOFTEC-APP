@@ -61,25 +61,45 @@ class TaskService {
 
   Future<void> addTask(Task task) async {
     try {
-      final category = await categorizeTask(task.title);
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
+      
+      // Use a default category first to ensure we have something
+      String category = 'General';
+      
+      try {
+        // Try to categorize, but don't let it fail the whole operation
+        category = await categorizeTask(task.title);
+      } catch (e) {
+        print("Error categorizing task, using default: $e");
+        // Continue with default category
+      }
+      
       final taskRef = _firestore
           .collection('users')
           .doc(userId)
           .collection('tasks')
           .doc(task.id);
 
-      await taskRef.set({
+      // Use a Map to ensure all fields are included correctly
+      final taskData = {
         'id': task.id,
         'title': task.title,
         'description': task.description,
         'dueDate': task.dueDate.toIso8601String(),
         'category': category,
         'isCompleted': task.isCompleted,
-        'colorCode': task.colorCode,
+        'colorCode': task.colorCode ?? '#FFAB00',
         'parentId': task.parentId,
-      });
+        'createdAt': FieldValue.serverTimestamp(), // Add creation timestamp
+      };
+
+      await taskRef.set(taskData);
+      print("Task saved to Firebase: ${task.id}");
     } catch (e) {
       print("Error adding task to Firestore: $e");
+      throw e; // Re-throw to allow proper error handling
     }
   }
 

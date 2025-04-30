@@ -19,8 +19,26 @@ class TaskNotifier extends StateNotifier<List<Task>> {
   }
 
   Future<void> addTask(Task task) async {
-    state = [...state, task];
-    await _taskService.addTask(task);
+    try {
+      // First add to local state
+      state = [...state, task];
+      
+      // Then save to Firebase
+      await _taskService.addTask(task);
+      
+      // Re-fetch tasks to ensure synchronization
+      await fetchTasks();
+      
+      // Log success for debugging
+      print("Task added successfully: ${task.title}");
+    } catch (e) {
+      // Revert state if Firebase operation fails
+      state = state.where((t) => t.id != task.id).toList();
+      print("Error adding task: $e");
+      
+      // Re-throw to allow UI to handle the error
+      rethrow;
+    }
   }
 
   Future<void> removeTask(String taskId) async {
